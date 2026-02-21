@@ -57,6 +57,9 @@ export function PlaceForm({
   onCreateTag,
   onCancel,
 }: PlaceFormProps) {
+  const initialLatitude = initialPlace?.latitude ?? initialCoordinates?.latitude ?? 40.722;
+  const initialLongitude = initialPlace?.longitude ?? initialCoordinates?.longitude ?? -73.995;
+
   const [name, setName] = useState(initialPlace?.name ?? "");
   const [notes, setNotes] = useState(initialPlace?.notes ?? "");
   const [status, setStatus] = useState<PlaceStatus>(
@@ -75,6 +78,9 @@ export function PlaceForm({
     return new Date();
   });
   const [tagIds, setTagIds] = useState<string[]>(initialPlace?.tagIds ?? []);
+  const [latitudeText, setLatitudeText] = useState(String(initialLatitude));
+  const [longitudeText, setLongitudeText] = useState(String(initialLongitude));
+  const [coordinateError, setCoordinateError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,15 +90,18 @@ export function PlaceForm({
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
   const resolvedCoordinates = useMemo(() => {
-    if (initialPlace) {
-      return {
-        latitude: initialPlace.latitude,
-        longitude: initialPlace.longitude,
-      };
+    const parsedLatitude = Number(latitudeText);
+    const parsedLongitude = Number(longitudeText);
+
+    if (!Number.isFinite(parsedLatitude) || !Number.isFinite(parsedLongitude)) {
+      return null;
     }
 
-    return initialCoordinates ?? { latitude: 40.722, longitude: -73.995 };
-  }, [initialPlace, initialCoordinates]);
+    return {
+      latitude: parsedLatitude,
+      longitude: parsedLongitude,
+    };
+  }, [latitudeText, longitudeText]);
 
   const existingImageUrls = useMemo(() => {
     if (initialPlace?.imageUrls?.length) {
@@ -124,6 +133,21 @@ export function PlaceForm({
     event.preventDefault();
     if (!name.trim()) return;
     if (imageError) return;
+
+    if (!resolvedCoordinates) {
+      setCoordinateError("Latitude and longitude must be valid numbers.");
+      return;
+    }
+    if (resolvedCoordinates.latitude < -90 || resolvedCoordinates.latitude > 90) {
+      setCoordinateError("Latitude must be between -90 and 90.");
+      return;
+    }
+    if (resolvedCoordinates.longitude < -180 || resolvedCoordinates.longitude > 180) {
+      setCoordinateError("Longitude must be between -180 and 180.");
+      return;
+    }
+
+    setCoordinateError(null);
 
     setIsSubmitting(true);
     await onSubmit({
@@ -229,7 +253,9 @@ export function PlaceForm({
       <div>
         <h2 className="text-base font-semibold text-foreground">{title}</h2>
         <p className="text-xs text-muted-foreground">
-          {resolvedCoordinates.latitude.toFixed(5)}, {resolvedCoordinates.longitude.toFixed(5)}
+          {resolvedCoordinates
+            ? `${resolvedCoordinates.latitude.toFixed(5)}, ${resolvedCoordinates.longitude.toFixed(5)}`
+            : "Invalid coordinates"}
         </p>
       </div>
 
@@ -241,6 +267,37 @@ export function PlaceForm({
           required
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
         />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs text-muted-foreground">Coordinates</label>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            step="any"
+            value={latitudeText}
+            onChange={(event) => {
+              setLatitudeText(event.target.value);
+              if (coordinateError) setCoordinateError(null);
+            }}
+            placeholder="Latitude"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <input
+            type="number"
+            step="any"
+            value={longitudeText}
+            onChange={(event) => {
+              setLongitudeText(event.target.value);
+              if (coordinateError) setCoordinateError(null);
+            }}
+            placeholder="Longitude"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </div>
+        {coordinateError ? (
+          <p className="text-[11px] text-destructive">{coordinateError}</p>
+        ) : null}
       </div>
 
       <div className="space-y-1">

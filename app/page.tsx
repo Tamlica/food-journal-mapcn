@@ -189,14 +189,14 @@ export default function Home() {
                 className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
               />
             </form>
-            {/* <button
+            <button
               type="button"
               onClick={handleOpenAdd}
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+              className="hidden items-center gap-1 rounded-md border border-border bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition hover:opacity-90 md:inline-flex"
             >
               <Plus className="size-3.5" />
               Add Place
-            </button> */}
+            </button>
           </div>
 
           {(isSearching || searchResults.length > 0) && (
@@ -385,14 +385,16 @@ export default function Home() {
           </div>
         )}
 
-        {/* <button
-          type="button"
-          onClick={handleOpenAdd}
-          className={`pointer-events-auto fixed bottom-5 right-5 z-40 inline-flex size-12 items-center justify-center rounded-full border border-border bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 ${showMobilePanel}`}
-          aria-label="Add place"
-        >
-          <Plus className="size-5" />
-        </button> */}
+        {!isAddOpen && (
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className={`pointer-events-auto fixed bottom-5 right-5 z-40 inline-flex size-12 items-center justify-center rounded-full border border-border bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 ${showMobilePanel}`}
+            aria-label="Add place"
+          >
+            <Plus className="size-5" />
+          </button>
+        )}
       </div>
     </main>
   );
