@@ -87,6 +87,46 @@ async function uploadPlaceImages(placeId: string, files: File[]) {
   return urls.filter((url): url is string => Boolean(url));
 }
 
+async function updatePlaceImageColumns(
+  placeId: string,
+  imageUrls: string[]
+): Promise<Place | null> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return null;
+
+  const primaryImageUrl = imageUrls[0] ?? null;
+
+  const { data, error } = await supabase
+    .from("places")
+    .update({ image_urls: imageUrls, image_url: primaryImageUrl })
+    .eq("id", placeId)
+    .select("*, place_tags(tag_id)")
+    .single();
+
+  if (!error) {
+    return data ? mapPlaceRow(data as PlaceRow) : null;
+  }
+
+  const isMissingImageUrlsColumn =
+    error.message?.toLowerCase().includes("image_urls") ||
+    error.details?.toLowerCase().includes("image_urls") ||
+    error.hint?.toLowerCase().includes("image_urls");
+
+  if (!isMissingImageUrlsColumn) {
+    throw error;
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("places")
+    .update({ image_url: primaryImageUrl })
+    .eq("id", placeId)
+    .select("*, place_tags(tag_id)")
+    .single();
+
+  if (fallbackError) throw fallbackError;
+  return fallbackData ? mapPlaceRow(fallbackData as PlaceRow) : null;
+}
+
 function mapTagRow(row: TagRow): JournalTag {
   return {
     id: row.id,
@@ -180,15 +220,8 @@ export async function createPlace(input: CreatePlaceInput): Promise<Place | null
   if (place && input.imageFiles && input.imageFiles.length > 0) {
     const imageUrls = await uploadPlaceImages(place.id, input.imageFiles);
     if (imageUrls.length > 0) {
-      const { data: updatedData, error: updateError } = await supabase
-        .from("places")
-        .update({ image_urls: imageUrls, image_url: imageUrls[0] })
-        .eq("id", place.id)
-        .select("*, place_tags(tag_id)")
-        .single();
-
-      if (updateError) throw updateError;
-      return updatedData ? mapPlaceRow(updatedData as PlaceRow) : place;
+      const updatedPlace = await updatePlaceImageColumns(place.id, imageUrls);
+      return updatedPlace ?? place;
     }
   }
 
@@ -212,14 +245,6 @@ export async function updatePlace(
   if (input.latitude !== undefined) payload.latitude = input.latitude;
   if (input.longitude !== undefined) payload.longitude = input.longitude;
 
-  if (input.imageFiles !== undefined) {
-    const imageUrls = input.imageFiles.length
-      ? await uploadPlaceImages(placeId, input.imageFiles)
-      : [];
-    payload.image_urls = imageUrls;
-    payload.image_url = imageUrls[0] ?? null;
-  }
-
   if (Object.keys(payload).length > 0) {
     const { error } = await supabase
       .from("places")
@@ -227,6 +252,13 @@ export async function updatePlace(
       .eq("id", placeId);
 
     if (error) throw error;
+  }
+
+  if (input.imageFiles !== undefined) {
+    const imageUrls = input.imageFiles.length
+      ? await uploadPlaceImages(placeId, input.imageFiles)
+      : [];
+    await updatePlaceImageColumns(placeId, imageUrls);
   }
 
   if (input.tagIds) {

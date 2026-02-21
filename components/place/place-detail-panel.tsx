@@ -2,7 +2,18 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Calendar, DollarSign, Pencil, Star, StarHalf, Trash2 } from "lucide-react";
+import { useState } from "react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Pencil,
+  Star,
+  StarHalf,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { STATUS_STYLE } from "@/lib/constants/food-journal";
 import { formatIdr } from "@/lib/format";
@@ -24,6 +35,8 @@ export function PlaceDetailPanel({
   onDelete,
   onClose,
 }: PlaceDetailPanelProps) {
+  const [fullscreenImageIndex, setFullscreenImageIndex] = useState<number | null>(null);
+
   if (!place) return null;
 
   const status = STATUS_STYLE[place.status];
@@ -35,6 +48,8 @@ export function PlaceDetailPanel({
       : place.imageUrl
         ? [place.imageUrl]
         : [];
+  const fullscreenImageUrl =
+    fullscreenImageIndex !== null ? imageUrls[fullscreenImageIndex] ?? null : null;
 
   const ratingStars = Array.from({ length: 5 }).map((_, index) => {
     const fullValue = index + 1;
@@ -71,12 +86,18 @@ export function PlaceDetailPanel({
         {imageUrls.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {imageUrls.map((imageUrl, index) => (
-              <img
+              <button
                 key={`${imageUrl}-${index}`}
-                src={imageUrl}
-                alt={`${place.name} ${index + 1}`}
-                className="h-32 w-full rounded-md border border-border object-cover"
-              />
+                type="button"
+                onClick={() => setFullscreenImageIndex(index)}
+                className="overflow-hidden rounded-md border border-border"
+              >
+                <img
+                  src={imageUrl}
+                  alt={`${place.name} ${index + 1}`}
+                  className="h-32 w-full cursor-zoom-in object-cover"
+                />
+              </button>
             ))}
           </div>
         ) : null}
@@ -145,6 +166,64 @@ export function PlaceDetailPanel({
           Delete
         </button>
       </div>
+
+      {fullscreenImageUrl ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setFullscreenImageIndex(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setFullscreenImageIndex(null)}
+            className="absolute right-4 top-4 rounded-md border border-white/20 bg-black/40 p-2 text-white transition hover:bg-black/60"
+          >
+            <X className="size-4" />
+          </button>
+
+          {imageUrls.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setFullscreenImageIndex((current) => {
+                    if (current === null) return 0;
+                    return (current - 1 + imageUrls.length) % imageUrls.length;
+                  });
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 p-2 text-white transition hover:bg-black/60"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setFullscreenImageIndex((current) => {
+                    if (current === null) return 0;
+                    return (current + 1) % imageUrls.length;
+                  });
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 p-2 text-white transition hover:bg-black/60"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+
+              <div className="absolute bottom-4 rounded-md border border-white/20 bg-black/40 px-2 py-1 text-xs text-white">
+                {fullscreenImageIndex !== null ? fullscreenImageIndex + 1 : 1} / {imageUrls.length}
+              </div>
+            </>
+          ) : null}
+
+          <img
+            src={fullscreenImageUrl}
+            alt={place.name}
+            className="max-h-full max-w-full rounded-lg object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

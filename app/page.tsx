@@ -27,6 +27,7 @@ export default function Home() {
     places,
     tags,
     filters,
+    connectionStatus,
     errorMessage,
     hydrate,
     addPlace,
@@ -188,14 +189,14 @@ export default function Home() {
                 className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
               />
             </form>
-            <button
+            {/* <button
               type="button"
               onClick={handleOpenAdd}
               className="inline-flex items-center gap-1 rounded-md border border-border bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition hover:opacity-90"
             >
               <Plus className="size-3.5" />
               Add Place
-            </button>
+            </button> */}
           </div>
 
           {(isSearching || searchResults.length > 0) && (
@@ -221,7 +222,41 @@ export default function Home() {
           )}
         </div>
 
-        <div className="pointer-events-auto absolute left-3 top-24">
+        <div className="pointer-events-auto absolute right-3 top-3 hidden items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur md:inline-flex">
+          <span
+            className={`inline-block size-2 rounded-full ${
+              connectionStatus === "connected"
+                ? "bg-emerald-500"
+                : connectionStatus === "checking"
+                  ? "bg-amber-500"
+                  : "bg-red-500"
+            }`}
+          />
+          {connectionStatus === "connected"
+            ? "Supabase connected"
+            : connectionStatus === "checking"
+              ? "Checking Supabase"
+              : "Supabase disconnected"}
+        </div>
+
+        <div className="pointer-events-auto absolute right-3 top-18 flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur md:hidden">
+          <span
+            className={`inline-block size-2 rounded-full ${
+              connectionStatus === "connected"
+                ? "bg-emerald-500"
+                : connectionStatus === "checking"
+                  ? "bg-amber-500"
+                  : "bg-red-500"
+            }`}
+          />
+          {connectionStatus === "connected"
+            ? "Supabase connected"
+            : connectionStatus === "checking"
+              ? "Checking Supabase"
+              : "Supabase disconnected"}
+        </div>
+
+        <div className="pointer-events-auto absolute left-3 top-18">
           <button
             type="button"
             onClick={toggleFilter}
@@ -277,7 +312,7 @@ export default function Home() {
         ) : null}
 
         {isAddOpen && (
-          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
+          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
             <PlaceForm
               key={placeFormKey}
               title={editingPlace ? "Edit Place" : "Add Place"}
@@ -295,8 +330,8 @@ export default function Home() {
         )}
 
         {isAddOpen && (
-          <div className={`pointer-events-auto absolute right-3 top-24 z-40 h-[calc(100vh-8rem)] w-90 ${showDesktopPanel}`}>
-            <section className="h-full rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur">
+          <div className={`pointer-events-auto absolute right-3 top-24 z-40 h-[calc(100dvh-8rem)] w-90 ${showDesktopPanel}`}>
+            <section className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground">
                   {editingPlace ? "Edit Place" : "Add Place"}
@@ -312,19 +347,21 @@ export default function Home() {
                   <X className="size-4" />
                 </button>
               </div>
-              <PlaceForm
-                key={placeFormKey}
-                title={editingPlace ? "Edit Place" : "Add Place"}
-                tags={tags}
-                initialPlace={editingPlace}
-                initialCoordinates={draftCoordinates}
-                onSubmit={handleSubmitPlace}
-                onCreateTag={addTag}
-                onCancel={() => {
-                  closeAdd();
-                  setEditingPlace(null);
-                }}
-              />
+              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <PlaceForm
+                  key={placeFormKey}
+                  title={editingPlace ? "Edit Place" : "Add Place"}
+                  tags={tags}
+                  initialPlace={editingPlace}
+                  initialCoordinates={draftCoordinates}
+                  onSubmit={handleSubmitPlace}
+                  onCreateTag={addTag}
+                  onCancel={() => {
+                    closeAdd();
+                    setEditingPlace(null);
+                  }}
+                />
+              </div>
             </section>
           </div>
         )}
@@ -348,14 +385,14 @@ export default function Home() {
           </div>
         )}
 
-        <button
+        {/* <button
           type="button"
           onClick={handleOpenAdd}
           className={`pointer-events-auto fixed bottom-5 right-5 z-40 inline-flex size-12 items-center justify-center rounded-full border border-border bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 ${showMobilePanel}`}
           aria-label="Add place"
         >
           <Plus className="size-5" />
-        </button>
+        </button> */}
       </div>
     </main>
   );

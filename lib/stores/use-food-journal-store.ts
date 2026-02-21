@@ -9,6 +9,7 @@ import {
   listTags,
   updatePlace,
 } from "@/lib/supabase/queries";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type {
   CreatePlaceInput,
   JournalTag,
@@ -17,11 +18,30 @@ import type {
   UpdatePlaceInput,
 } from "@/lib/types/food-journal";
 
+function isConnectionError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("timeout") ||
+    message.includes("fetch")
+  );
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
+}
+
 type FoodJournalState = {
   places: Place[];
   tags: JournalTag[];
   filters: PlaceFilters;
   isLoading: boolean;
+  connectionStatus: "checking" | "connected" | "disconnected";
   errorMessage: string | null;
   hydrate: () => Promise<void>;
   addPlace: (input: CreatePlaceInput) => Promise<void>;
@@ -45,15 +65,29 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
     tagIds: [],
   },
   isLoading: false,
+  connectionStatus: "checking",
   errorMessage: null,
 
   hydrate: async () => {
+    const client = getSupabaseBrowserClient();
+    if (!client) {
+      set({
+        isLoading: false,
+        connectionStatus: "disconnected",
+        errorMessage: "Supabase env is missing. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      });
+      return;
+    }
+
     set({ isLoading: true, errorMessage: null });
     try {
       const [remotePlaces, remoteTags] = await Promise.all([listPlaces(), listTags()]);
-      set({ places: remotePlaces, tags: remoteTags });
+      set({ places: remotePlaces, tags: remoteTags, connectionStatus: "connected" });
     } catch {
-      set({ errorMessage: "Supabase is unavailable right now." });
+      set({
+        connectionStatus: "disconnected",
+        errorMessage: "Supabase is unavailable right now.",
+      });
     } finally {
       set({ isLoading: false });
     }
@@ -81,14 +115,29 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
 
     try {
       const created = await createPlace(input);
-      if (!created) return;
+      if (!created) {
+        set((state) => ({
+          places: state.places.filter((place) => place.id !== optimistic.id),
+          errorMessage: "Supabase client is not available.",
+          connectionStatus: "disconnected",
+        }));
+        return;
+      }
       set((state) => ({
         places: state.places.map((place) =>
           place.id === optimistic.id ? created : place
         ),
+        connectionStatus: "connected",
       }));
-    } catch {
-      set({ errorMessage: "Could not save place to Supabase." });
+    } catch (error) {
+      console.error("Error creating place:", error);
+      set((state) => ({
+        places: state.places.filter((place) => place.id !== optimistic.id),
+        connectionStatus: isConnectionError(error)
+          ? "disconnected"
+          : state.connectionStatus,
+        errorMessage: getErrorMessage(error, "Could not save place to Supabase."),
+      }));
     }
   },
 
@@ -122,9 +171,15 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
         places: state.places.map((place) =>
           place.id === placeId ? updated : place
         ),
+        connectionStatus: "connected",
       }));
-    } catch {
-      set({ errorMessage: "Could not update place in Supabase." });
+    } catch (error) {
+      set((state) => ({
+        connectionStatus: isConnectionError(error)
+          ? "disconnected"
+          : state.connectionStatus,
+        errorMessage: getErrorMessage(error, "Could not update place in Supabase."),
+      }));
     }
   },
 
@@ -134,8 +189,15 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
 
     try {
       await deletePlace(placeId);
-    } catch {
-      set({ places: before, errorMessage: "Could not delete place from Supabase." });
+      set({ connectionStatus: "connected" });
+    } catch (error) {
+      set((state) => ({
+        places: before,
+        connectionStatus: isConnectionError(error)
+          ? "disconnected"
+          : state.connectionStatus,
+        errorMessage: getErrorMessage(error, "Could not delete place from Supabase."),
+      }));
     }
   },
 
@@ -154,9 +216,15 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
       if (!created) return;
       set((state) => ({
         tags: state.tags.map((tag) => (tag.id === optimistic.id ? created : tag)),
+        connectionStatus: "connected",
       }));
-    } catch {
-      set({ errorMessage: "Could not save tag to Supabase." });
+    } catch (error) {
+      set((state) => ({
+        connectionStatus: isConnectionError(error)
+          ? "disconnected"
+          : state.connectionStatus,
+        errorMessage: getErrorMessage(error, "Could not save tag to Supabase."),
+      }));
     }
   },
 
