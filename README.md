@@ -4,42 +4,42 @@ A full-featured food journal application with a map-first interface. Track place
 
 ## Features
 
-### 📍 Map-First Interface
+### Map-First Interface
 - **Full-screen MapLibreGL map** with responsive design (desktop drawer + mobile sheets)
 - **Real-time user location tracking** - Blue pulsing dot shows your current GPS location
 - **Status-specific icons** - Visual indicators for place status (visited ✓, want to go 📍, avoid ✗)
 - **Smart clustering** - Automatically groups nearby places by status
 - **Search integration** - Find locations using OpenStreetMap Nominatim
 
-### 🍽️ Place Management
+### Place Management
 - **Add/edit/delete places** with intuitive modal form
 - **Place details** - Name, location (coordinates), photos, notes, status, rating, price range, visit date, and tags
 - **Status tracking** - Mark places as "visited", "want to go", or "avoid"
 - **Image uploads** - Upload food photos to Supabase Storage with cloud preview
 
-### ⭐ Rating System
+### Rating System
 - **Half-step ratings** (0.5 to 5.0 stars) - Click to rate on both halves
 - **Visual display** - Filled, half-filled, and empty stars in detail view
 - **Filterable** - Click star counts in filter panel to filter by minimum rating
 
-### 💰 Pricing
+### Pricing
 - **IDR-based pricing** idealized for Indonesian food scenes
 - **Dual slider controls** - Min and max price range (20,000 - 200,000 IDR, 5,000 step)
 - **Smart formatting** - Displays prices with IDR currency format
 
-### 🎨 Tags & Colors
+### Tags & Colors
 - **Tag system** - Create and assign tags to places
 - **Color-coded tagging** - Choose from customizable color swatches for each tag
 - **Multi-select filtering** - Filter places by one or more tags
 
-### 📅 Advanced Filtering
+### Advanced Filtering
 - **Status filter** - Show/hide places by status
 - **Rating filter** - Clickable stars to filter by minimum rating
 - **Price range slider** - Dual slider for min/max price
 - **Tag multi-select** - Filter by multiple tags simultaneously
 - **Reset all filters** - One-click to clear all active filters
 
-### 📱 Mobile Optimized
+### Mobile Optimized
 - **Responsive design** - Optimized for phones, tablets, and desktops
 - **Dynamic viewport height** - Works around mobile browser UI (address bar)
 - **Touch-friendly controls** - Appropriately sized buttons and inputs
@@ -65,7 +65,7 @@ A full-featured food journal application with a map-first interface. Track place
 
 1. **Clone and install dependencies:**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/Tamlica/food-journal-mapcn.git
    cd food-journal-map
    npm install
    ```
