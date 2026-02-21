@@ -1,0 +1,61 @@
+import type { JournalTag, Place } from "@/lib/types/food-journal";
+
+const now = new Date().toISOString();
+
+export const seedTags: JournalTag[] = [
+  { id: "t-coffee", name: "Coffee", color: "#64748b", createdAt: now },
+  { id: "t-noodles", name: "Noodles", color: "#334155", createdAt: now },
+  { id: "t-date", name: "Date Spot", color: "#475569", createdAt: now },
+  { id: "t-budget", name: "Budget", color: "#52525b", createdAt: now },
+];
+
+export const seedPlaces: Place[] = [
+  {
+    id: "p-1",
+    name: "Night Roastery",
+    notes: "Late hours, smooth espresso.",
+    status: "visited",
+    rating: 5,
+    priceRange: 2,
+    visitDate: "2026-01-14",
+    latitude: 40.722,
+    longitude: -73.995,
+    imageUrls: [],
+    imageUrl: null,
+    tagIds: ["t-coffee", "t-date"],
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: "p-2",
+    name: "Steam Alley",
+    notes: null,
+    status: "want_to_go",
+    rating: null,
+    priceRange: 2,
+    visitDate: null,
+    latitude: 40.728,
+    longitude: -73.986,
+    imageUrls: [],
+    imageUrl: null,
+    tagIds: ["t-noodles", "t-budget"],
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: "p-3",
+    name: "Loud Patio Bar",
+    notes: "Too noisy and long wait.",
+    status: "avoid",
+    rating: null,
+    priceRange: 3,
+    visitDate: null,
+    latitude: 40.716,
+    longitude: -74.007,
+    imageUrls: [],
+    imageUrl: null,
+    tagIds: [],
+    createdAt: now,
+    updatedAt: now,
+  },
+];

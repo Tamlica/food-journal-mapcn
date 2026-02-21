@@ -1,65 +1,362 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Filter, Plus, Search, X } from "lucide-react";
+
+import { PlaceMap } from "@/components/map/place-map";
+import { FilterPanel } from "@/components/place/filter-panel";
+import { PlaceDetailPanel } from "@/components/place/place-detail-panel";
+import { PlaceForm } from "@/components/place/place-form";
+import { filterPlaces } from "@/lib/food-journal-utils";
+import { useFoodJournalStore } from "@/lib/stores/use-food-journal-store";
+import { useMapUiStore } from "@/lib/stores/use-map-ui-store";
+import type { MapRef } from "@/components/ui/map";
+import type { Place } from "@/lib/types/food-journal";
+
+type SearchResult = {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+};
 
 export default function Home() {
+  const mapRef = useRef<MapRef | null>(null);
+
+  const {
+    places,
+    tags,
+    filters,
+    errorMessage,
+    hydrate,
+    addPlace,
+    editPlace,
+    removePlace,
+    addTag,
+    setFilters,
+    toggleStatus,
+    toggleTagFilter,
+    resetFilters,
+  } = useFoodJournalStore();
+
+  const {
+    selectedPlaceId,
+    isAddOpen,
+    isDetailOpen,
+    isFilterOpen,
+    draftCoordinates,
+    openAdd,
+    closeAdd,
+    openDetail,
+    closeDetail,
+    toggleFilter,
+    closeFilter,
+  } = useMapUiStore();
+
+  const [searchValue, setSearchValue] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [editingPlace, setEditingPlace] = useState<Place | null>(null);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+
+  const placeFormKey = useMemo(
+    () => `${editingPlace?.id ?? 'new'}-${draftCoordinates?.latitude}-${draftCoordinates?.longitude}`,
+    [editingPlace, draftCoordinates]
+  );
+
+  const filteredPlaces = useMemo(
+    () => filterPlaces(places, filters),
+    [places, filters]
+  );
+
+  const selectedPlace = useMemo(
+    () => places.find((place) => place.id === selectedPlaceId) ?? null,
+    [places, selectedPlaceId]
+  );
+
+  useEffect(() => {
+    if (!selectedPlace && isDetailOpen) {
+      closeDetail();
+    }
+  }, [selectedPlace, isDetailOpen, closeDetail]);
+
+  const handleSearch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!searchValue.trim()) return;
+
+    setIsSearching(true);
+
+    try {
+      const query = encodeURIComponent(searchValue.trim());
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=${query}`
+      );
+
+      if (!response.ok) {
+        setSearchResults([]);
+        return;
+      }
+
+      const data = (await response.json()) as SearchResult[];
+      setSearchResults(data);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchSelect = (result: SearchResult) => {
+    const longitude = Number(result.lon);
+    const latitude = Number(result.lat);
+
+    mapRef.current?.easeTo({
+      center: [longitude, latitude],
+      zoom: 14,
+      duration: 700,
+    });
+
+    openAdd({ latitude, longitude });
+    setSearchResults([]);
+  };
+
+  const handleMapPick = (coords: { longitude: number; latitude: number }) => {
+    closeDetail();
+    openAdd({ latitude: coords.latitude, longitude: coords.longitude });
+    setEditingPlace(null);
+  };
+
+  const handleOpenAdd = () => {
+    closeDetail();
+    setEditingPlace(null);
+    openAdd(null);
+  };
+
+  const handleSubmitPlace = async (payload: {
+    name: string;
+    notes?: string;
+    status: Place["status"];
+    rating?: number;
+    priceRange?: number;
+    visitDate?: string;
+    latitude: number;
+    longitude: number;
+    tagIds?: string[];
+    imageFiles?: File[];
+  }) => {
+    const typedPayload = {
+      ...payload,
+      priceRange: payload.priceRange,
+    };
+
+    if (editingPlace) {
+      await editPlace(editingPlace.id, typedPayload);
+      setEditingPlace(null);
+      closeAdd();
+      return;
+    }
+
+    await addPlace(typedPayload);
+    closeAdd();
+  };
+
+  const showDesktopPanel = "hidden md:block";
+  const showMobilePanel = "md:hidden";
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="relative w-screen overflow-hidden bg-background text-foreground" style={{ height: '100dvh' }}>
+      <div className="absolute inset-0">
+        <PlaceMap
+          places={filteredPlaces}
+          selectedPlaceId={selectedPlaceId}
+          mapRef={mapRef}
+          onPlaceSelect={(placeId) => openDetail(placeId)}
+          onMapPick={handleMapPick}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 z-30">
+        <div className="pointer-events-auto absolute left-1/2 top-3 w-[min(92vw,760px)] -translate-x-1/2 rounded-2xl border border-border bg-card/90 p-2 shadow-sm backdrop-blur">
+          <div className="flex items-center gap-2">
+            <form onSubmit={handleSearch} className="relative flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <input
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder="Search location"
+                className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </form>
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition hover:opacity-90"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <Plus className="size-3.5" />
+              Add Place
+            </button>
+          </div>
+
+          {(isSearching || searchResults.length > 0) && (
+            <div className="mt-2 rounded-md border border-border bg-background">
+              {isSearching ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">Searching...</p>
+              ) : (
+                <ul className="max-h-56 overflow-auto py-1">
+                  {searchResults.map((result) => (
+                    <li key={result.place_id}>
+                      <button
+                        type="button"
+                        onClick={() => handleSearchSelect(result)}
+                        className="w-full px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                      >
+                        {result.display_name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="pointer-events-auto absolute left-3 top-24">
+          <button
+            type="button"
+            onClick={toggleFilter}
+            className="inline-flex items-center gap-1 rounded-md border border-border bg-card/90 px-3 py-2 text-xs text-foreground shadow-sm backdrop-blur transition hover:bg-accent"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <Filter className="size-3.5" />
+            Filters
+          </button>
+        </div>
+
+        {isFilterOpen && (
+          <div className="pointer-events-auto absolute left-3 top-36 w-75 max-w-[92vw]">
+            <FilterPanel
+              tags={tags}
+              filters={filters}
+              onToggleStatus={toggleStatus}
+              onSetMinRating={(value) => setFilters({ minRating: value })}
+              onToggleTag={toggleTagFilter}
+              onSetPriceRange={({ min, max }) =>
+                setFilters({ priceMin: min, priceMax: max })
+              }
+              onReset={() => {
+                resetFilters();
+                closeFilter();
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+        )}
+
+        <div className={`pointer-events-auto absolute right-3 top-24 h-[calc(100vh-8rem)] w-85 ${showDesktopPanel}`}>
+          {selectedPlace && isDetailOpen ? (
+            <PlaceDetailPanel
+              place={selectedPlace}
+              tags={tags}
+              onClose={closeDetail}
+              onDelete={(placeId) => {
+                void removePlace(placeId);
+                closeDetail();
+              }}
+              onEdit={(place) => {
+                closeDetail();
+                setEditingPlace(place);
+                openAdd({ latitude: place.latitude, longitude: place.longitude });
+              }}
+            />
+          ) : null}
         </div>
-      </main>
-    </div>
+
+        {errorMessage ? (
+          <div className="pointer-events-auto absolute bottom-4 left-3 rounded-md border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground shadow-sm backdrop-blur">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {isAddOpen && (
+          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
+            <PlaceForm
+              key={placeFormKey}
+              title={editingPlace ? "Edit Place" : "Add Place"}
+              tags={tags}
+              initialPlace={editingPlace}
+              initialCoordinates={draftCoordinates}
+              onSubmit={handleSubmitPlace}
+              onCreateTag={addTag}
+              onCancel={() => {
+                closeAdd();
+                setEditingPlace(null);
+              }}
+            />
+          </div>
+        )}
+
+        {isAddOpen && (
+          <div className={`pointer-events-auto absolute right-3 top-24 z-40 h-[calc(100vh-8rem)] w-90 ${showDesktopPanel}`}>
+            <section className="h-full rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {editingPlace ? "Edit Place" : "Add Place"}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeAdd();
+                    setEditingPlace(null);
+                  }}
+                  className="rounded-md border border-border p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <PlaceForm
+                key={placeFormKey}
+                title={editingPlace ? "Edit Place" : "Add Place"}
+                tags={tags}
+                initialPlace={editingPlace}
+                initialCoordinates={draftCoordinates}
+                onSubmit={handleSubmitPlace}
+                onCreateTag={addTag}
+                onCancel={() => {
+                  closeAdd();
+                  setEditingPlace(null);
+                }}
+              />
+            </section>
+          </div>
+        )}
+
+        {selectedPlace && isDetailOpen && (
+          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
+            <PlaceDetailPanel
+              place={selectedPlace}
+              tags={tags}
+              onClose={closeDetail}
+              onDelete={(placeId) => {
+                void removePlace(placeId);
+                closeDetail();
+              }}
+              onEdit={(place) => {
+                closeDetail();
+                setEditingPlace(place);
+                openAdd({ latitude: place.latitude, longitude: place.longitude });
+              }}
+            />
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleOpenAdd}
+          className={`pointer-events-auto fixed bottom-5 right-5 z-40 inline-flex size-12 items-center justify-center rounded-full border border-border bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 ${showMobilePanel}`}
+          aria-label="Add place"
+        >
+          <Plus className="size-5" />
+        </button>
+      </div>
+    </main>
   );
 }
