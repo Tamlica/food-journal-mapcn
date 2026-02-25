@@ -16,6 +16,7 @@ export const DEFAULT_FILTERS = {
   priceMin: MIN_PRICE_IDR,
   priceMax: MAX_PRICE_IDR,
   tagIds: [] as string[],
+  searchName: "",
 };
 
 export const STATUS_STYLE: Record<

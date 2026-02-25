@@ -272,6 +272,7 @@ export default function Home() {
             <FilterPanel
               tags={tags}
               filters={filters}
+              onSearchNameChange={(name) => setFilters({ searchName: name })}
               onToggleStatus={toggleStatus}
               onSetMinRating={(value) => setFilters({ minRating: value })}
               onToggleTag={toggleTagFilter}

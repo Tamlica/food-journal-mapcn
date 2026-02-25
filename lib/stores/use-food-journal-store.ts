@@ -63,6 +63,7 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
     priceMin: DEFAULT_FILTERS.priceMin,
     priceMax: DEFAULT_FILTERS.priceMax,
     tagIds: [],
+    searchName: "",
   },
   isLoading: false,
   connectionStatus: "checking",
@@ -270,6 +271,7 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
         priceMin: DEFAULT_FILTERS.priceMin,
         priceMax: DEFAULT_FILTERS.priceMax,
         tagIds: [],
+        searchName: DEFAULT_FILTERS.searchName,
       },
     }),
 }));

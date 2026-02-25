@@ -32,6 +32,7 @@ export type PlaceFilters = {
   priceMin: number;
   priceMax: number;
   tagIds: string[];
+  searchName: string;
 };
 
 export type CreatePlaceInput = {

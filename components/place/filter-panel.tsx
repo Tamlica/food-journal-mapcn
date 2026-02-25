@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Star, StarHalf } from "lucide-react";
+import { RotateCcw, Search, Star, StarHalf } from "lucide-react";
 
 import {
   MAX_PRICE_IDR,
@@ -15,6 +15,7 @@ import type { JournalTag, PlaceFilters } from "@/lib/types/food-journal";
 type FilterPanelProps = {
   tags: JournalTag[];
   filters: PlaceFilters;
+  onSearchNameChange: (name: string) => void;
   onToggleStatus: (status: PlaceFilters["statuses"][number]) => void;
   onSetMinRating: (value: number) => void;
   onToggleTag: (tagId: string) => void;
@@ -25,6 +26,7 @@ type FilterPanelProps = {
 export function FilterPanel({
   tags,
   filters,
+  onSearchNameChange,
   onToggleStatus,
   onSetMinRating,
   onToggleTag,
@@ -77,6 +79,20 @@ export function FilterPanel({
       </div>
 
       <div className="space-y-4 text-xs">
+        <div className="space-y-2">
+          <p className="text-muted-foreground">Search Name</p>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by place name"
+              value={filters.searchName}
+              onChange={(event) => onSearchNameChange(event.target.value)}
+              className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-xs outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
           <p className="text-muted-foreground">Status</p>
           <div className="grid grid-cols-1 gap-2">

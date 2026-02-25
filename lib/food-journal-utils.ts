@@ -21,6 +21,11 @@ export function filterPlaces(places: Place[], filters: PlaceFilters): Place[] {
       if (!hasTag) return false;
     }
 
+    if (filters.searchName.trim()) {
+      const searchLower = filters.searchName.toLowerCase();
+      if (!place.name.toLowerCase().includes(searchLower)) return false;
+    }
+
     return true;
   });
 }
