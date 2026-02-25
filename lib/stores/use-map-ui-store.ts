@@ -37,6 +37,8 @@ export const useMapUiStore = create<MapUiState>((set) => ({
     set({
       selectedPlaceId: placeId,
       isDetailOpen: true,
+      isAddOpen: false,
+      draftCoordinates: null,
     }),
   closeDetail: () => set({ isDetailOpen: false }),
   toggleFilter: () => set((state) => ({ isFilterOpen: !state.isFilterOpen })),
