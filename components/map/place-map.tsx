@@ -313,9 +313,9 @@ export function PlaceMap({
       <MapClusterLayer
         data={visitedData}
         pointColor={STATUS_STYLE.visited.pointColor}
-        pointRadius={8}
+        pointRadius={10}
         pointIconSvg={VISITED_ICON}
-        pointIconSize={0.7}
+        pointIconSize={0.8}
         clusterColors={STATUS_STYLE.visited.clusterColors}
         onPointClick={(feature) => {
           if (feature.properties?.placeId) {
@@ -326,9 +326,9 @@ export function PlaceMap({
       <MapClusterLayer
         data={wantToGoData}
         pointColor={STATUS_STYLE.want_to_go.pointColor}
-        pointRadius={5.5}
+        pointRadius={10}
         pointIconSvg={WANT_TO_GO_ICON}
-        pointIconSize={0.62}
+        pointIconSize={0.8}
         clusterColors={STATUS_STYLE.want_to_go.clusterColors}
         onPointClick={(feature) => {
           if (feature.properties?.placeId) {
@@ -339,9 +339,9 @@ export function PlaceMap({
       <MapClusterLayer
         data={avoidData}
         pointColor={STATUS_STYLE.avoid.pointColor}
-        pointRadius={4.8}
+        pointRadius={10}
         pointIconSvg={AVOID_ICON}
-        pointIconSize={0.58}
+        pointIconSize={0.8}
         clusterColors={STATUS_STYLE.avoid.clusterColors}
         onPointClick={(feature) => {
           if (feature.properties?.placeId) {

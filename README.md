@@ -77,6 +77,9 @@ A full-featured food journal application with a map-first interface. Track place
      - `20260220_add_place_image.sql` (image support)
      - `20260220_price_range_idr.sql` (IDR pricing)
      - `20260220_rating_half.sql` (half-step ratings)
+     - `20260221_add_place_images_array.sql`
+     - `20260221_add_rls_policies.sql`
+     - `20260221_add_storage_policies.sql`
    - Copy your Supabase project URL and anon key
 
 3. **Configure environment:**

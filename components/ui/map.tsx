@@ -1301,7 +1301,7 @@ function MapClusterLayer<
       paint: {
         "circle-color": pointColor,
         "circle-radius": pointRadius,
-        "circle-stroke-width": 2,
+        "circle-stroke-width": 1,
         "circle-stroke-color": "#fff",
       },
     });
