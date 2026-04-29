@@ -268,7 +268,7 @@ export default function Home() {
         </div>
 
         {isFilterOpen && (
-          <div className="pointer-events-auto absolute left-3 top-36 w-75 max-w-[92vw]">
+          <div className="pointer-events-auto absolute left-3 top-28 w-75 max-w-[92vw]">
             <FilterPanel
               tags={tags}
               filters={filters}
@@ -331,7 +331,7 @@ export default function Home() {
         )}
 
         {isAddOpen && (
-          <div className={`pointer-events-auto absolute right-3 top-24 z-40 h-[calc(100dvh-8rem)] w-90 ${showDesktopPanel}`}>
+          <div className={`pointer-events-auto absolute right-3 top-24 z-40 h-[calc(100dvh-8rem)] w-95 ${showDesktopPanel}`}>
             <section className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground">

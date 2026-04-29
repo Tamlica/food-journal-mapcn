@@ -1272,8 +1272,8 @@ function MapClusterLayer<
           40,
         ],
         "circle-stroke-width": 1,
-        "circle-stroke-color": "#fff",
-        "circle-opacity": 0.85,
+        "circle-stroke-color": "#000",
+        "circle-opacity": 1,
       },
     });
 
@@ -1288,7 +1288,7 @@ function MapClusterLayer<
         "text-size": 12,
       },
       paint: {
-        "text-color": "#fff",
+        "text-color": "#000",
       },
     });
 
@@ -1302,7 +1302,7 @@ function MapClusterLayer<
         "circle-color": pointColor,
         "circle-radius": pointRadius,
         "circle-stroke-width": 1,
-        "circle-stroke-color": "#fff",
+        "circle-stroke-color": "#000",
       },
     });
 
@@ -1318,7 +1318,7 @@ function MapClusterLayer<
           "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
         },
         paint: {
-          "text-color": "#fff",
+          "text-color": "#000",
         },
       });
     }

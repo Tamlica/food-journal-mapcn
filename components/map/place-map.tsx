@@ -25,22 +25,62 @@ type PlaceMapProps = {
 const INDONESIA_CENTER: [number, number] = [113.9213, -0.7893];
 
 const VISITED_ICON = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M20 6 9 17l-5-5" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.08"/>
+  <path 
+    d="M7 12.5L10.2 15.7L17.5 8.5" 
+    stroke="currentColor" 
+    stroke-width="2.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
 </svg>
 `;
 
 const WANT_TO_GO_ICON = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 21s-6-5.33-6-10a6 6 0 1 1 12 0c0 4.67-6 10-6 10z" />
-  <circle cx="12" cy="11" r="2" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <path 
+    d="M12 21C12 21 5 15.25 5 10.5C5 6.36 8.13 3.5 12 3.5C15.87 3.5 19 6.36 19 10.5C19 15.25 12 21 12 21Z" 
+    fill="currentColor" 
+    opacity="0.08"
+  />
+  <path 
+    d="M12 21C12 21 5 15.25 5 10.5C5 6.36 8.13 3.5 12 3.5C15.87 3.5 19 6.36 19 10.5C19 15.25 12 21 12 21Z" 
+    stroke="currentColor" 
+    stroke-width="2" 
+    stroke-linejoin="round"
+  />
+  <circle 
+    cx="12" 
+    cy="10.5" 
+    r="2.5" 
+    fill="currentColor"
+  />
 </svg>
 `;
 
 const AVOID_ICON = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="9" />
-  <path d="M5 5l14 14" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <circle 
+    cx="12" 
+    cy="12" 
+    r="9" 
+    fill="currentColor" 
+    opacity="0.08"
+  />
+  <circle 
+    cx="12" 
+    cy="12" 
+    r="9" 
+    stroke="currentColor" 
+    stroke-width="2"
+  />
+  <path 
+    d="M8 8L16 16" 
+    stroke="currentColor" 
+    stroke-width="2.5" 
+    stroke-linecap="round"
+  />
 </svg>
 `;
 
@@ -313,7 +353,7 @@ export function PlaceMap({
       <MapClusterLayer
         data={visitedData}
         pointColor={STATUS_STYLE.visited.pointColor}
-        pointRadius={10}
+        pointRadius={12}
         pointIconSvg={VISITED_ICON}
         pointIconSize={0.8}
         clusterColors={STATUS_STYLE.visited.clusterColors}
@@ -326,7 +366,7 @@ export function PlaceMap({
       <MapClusterLayer
         data={wantToGoData}
         pointColor={STATUS_STYLE.want_to_go.pointColor}
-        pointRadius={10}
+        pointRadius={12}
         pointIconSvg={WANT_TO_GO_ICON}
         pointIconSize={0.8}
         clusterColors={STATUS_STYLE.want_to_go.clusterColors}
@@ -339,9 +379,9 @@ export function PlaceMap({
       <MapClusterLayer
         data={avoidData}
         pointColor={STATUS_STYLE.avoid.pointColor}
-        pointRadius={10}
+        pointRadius={12}
         pointIconSvg={AVOID_ICON}
-        pointIconSize={0.8}
+        pointIconSize={1}
         clusterColors={STATUS_STYLE.avoid.clusterColors}
         onPointClick={(feature) => {
           if (feature.properties?.placeId) {

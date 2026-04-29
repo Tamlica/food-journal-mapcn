@@ -34,7 +34,7 @@ export const STATUS_STYLE: Record<
     label: "Visited",
     dotClassName: "bg-emerald-400",
     pointColor: "#34d399",
-    pointSizeClassName: "size-3.5",
+    pointSizeClassName: "size-3",
     clusterColors: ["#34d399", "#059669", "#047857"],
     iconLabel: "Check",
   },
