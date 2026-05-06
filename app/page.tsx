@@ -10,6 +10,7 @@ import { PlaceForm } from "@/components/place/place-form";
 import { filterPlaces } from "@/lib/food-journal-utils";
 import { useFoodJournalStore } from "@/lib/stores/use-food-journal-store";
 import { useMapUiStore } from "@/lib/stores/use-map-ui-store";
+import { getRoutes, formatDistance, formatDuration } from "@/lib/routing";
 import type { MapRef } from "@/components/ui/map";
 import type { Place } from "@/lib/types/food-journal";
 
@@ -46,12 +47,22 @@ export default function Home() {
     isDetailOpen,
     isFilterOpen,
     draftCoordinates,
+    routes,
+    selectedRouteIndex,
+    isRouteLoading,
+    routeError,
     openAdd,
     closeAdd,
     openDetail,
     closeDetail,
     toggleFilter,
     closeFilter,
+    setRoutes,
+    selectRoute,
+    clearRoutes,
+    setRouteLoading,
+    setRouteError,
+    updateDraftCoordinates,
   } = useMapUiStore();
 
   const [searchValue, setSearchValue] = useState("");
@@ -128,6 +139,56 @@ export default function Home() {
     setEditingPlace(null);
   };
 
+  const handleCoordinatesChange = (coords: { longitude: number; latitude: number } | null) => {
+    updateDraftCoordinates(coords);
+  };
+
+  const handleGetDirections = async (placeCoords: { longitude: number; latitude: number }) => {
+    if (!("geolocation" in navigator)) {
+      setRouteError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setRouteLoading(true);
+    setRouteError(null);
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+
+      const from: [number, number] = [position.coords.longitude, position.coords.latitude];
+      const to: [number, number] = [placeCoords.longitude, placeCoords.latitude];
+
+      const allRoutes = await getRoutes(from, to);
+      setRoutes(allRoutes);
+      closeDetail();
+    } catch (err) {
+      setRouteLoading(false);
+      if (err instanceof DOMException && err.name === "TimeoutError") {
+        setRouteError("Location request timed out. Please try again.");
+      } else if (err instanceof GeolocationPositionError) {
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setRouteError("Location access denied. Please enable location permissions.");
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setRouteError("Unable to determine your location.");
+            break;
+          default:
+            setRouteError("Failed to find route. Please try again.");
+        }
+      } else if (err instanceof Error && err.message.includes("No route")) {
+        setRouteError("No route found to this location");
+      } else {
+        setRouteError("Failed to find route. Please try again.");
+      }
+    }
+  };
+
   const handleOpenAdd = () => {
     closeDetail();
     setEditingPlace(null);
@@ -174,6 +235,10 @@ export default function Home() {
           mapRef={mapRef}
           onPlaceSelect={(placeId) => openDetail(placeId)}
           onMapPick={handleMapPick}
+          routes={routes}
+          selectedRouteIndex={selectedRouteIndex}
+          onSelectRoute={selectRoute}
+          draftCoordinates={draftCoordinates}
         />
       </div>
 
@@ -302,6 +367,9 @@ export default function Home() {
                 setEditingPlace(place);
                 openAdd({ latitude: place.latitude, longitude: place.longitude });
               }}
+              onGetDirections={handleGetDirections}
+              isRouteLoading={isRouteLoading}
+              routeError={routeError}
             />
           ) : null}
         </div>
@@ -313,7 +381,7 @@ export default function Home() {
         ) : null}
 
         {isAddOpen && (
-          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
+          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
             <PlaceForm
               key={placeFormKey}
               title={editingPlace ? "Edit Place" : "Add Place"}
@@ -326,6 +394,7 @@ export default function Home() {
                 closeAdd();
                 setEditingPlace(null);
               }}
+              onCoordinatesChange={handleCoordinatesChange}
             />
           </div>
         )}
@@ -361,6 +430,7 @@ export default function Home() {
                     closeAdd();
                     setEditingPlace(null);
                   }}
+                  onCoordinatesChange={handleCoordinatesChange}
                 />
               </div>
             </section>
@@ -382,11 +452,52 @@ export default function Home() {
                 setEditingPlace(place);
                 openAdd({ latitude: place.latitude, longitude: place.longitude });
               }}
+              onGetDirections={handleGetDirections}
+              isRouteLoading={isRouteLoading}
+              routeError={routeError}
             />
           </div>
         )}
 
-        {!isAddOpen && (
+        {routes.length > 0 && (
+          <div className="pointer-events-auto fixed inset-x-3 bottom-3 z-40 flex items-center gap-2 rounded-2xl border border-border bg-card/95 px-4 py-3 shadow-sm backdrop-blur md:inset-x-auto md:right-3 md:bottom-5 md:w-80">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="inline-block size-2 rounded-full bg-blue-500" />
+                <span className="font-medium text-foreground">{formatDistance(routes[selectedRouteIndex].distanceMeters)}</span>
+                <span className="text-border">·</span>
+                <span>{formatDuration(routes[selectedRouteIndex].durationSeconds)}</span>
+              </div>
+            </div>
+            {routes.length > 1 && (
+              <div className="flex items-center gap-1">
+                {routes.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => selectRoute(index)}
+                    className={`size-6 rounded-full text-[10px] font-medium transition ${
+                      index === selectedRouteIndex
+                        ? "bg-blue-500 text-white"
+                        : "border border-border bg-background text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={clearRoutes}
+              className="rounded-md p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
+
+        {!isAddOpen && routes.length === 0 && (
           <button
             type="button"
             onClick={handleOpenAdd}

@@ -29,6 +29,7 @@ type PlaceFormProps = {
   onSubmit: (value: CreatePlaceInput) => Promise<void>;
   onCreateTag: (value: { name: string; color: string }) => Promise<void>;
   onCancel: () => void;
+  onCoordinatesChange?: (coordinates: { longitude: number; latitude: number } | null) => void;
 };
 
 const tagColors = [
@@ -56,9 +57,10 @@ export function PlaceForm({
   onSubmit,
   onCreateTag,
   onCancel,
+  onCoordinatesChange,
 }: PlaceFormProps) {
-  const initialLatitude = initialPlace?.latitude ?? initialCoordinates?.latitude ?? 40.722;
-  const initialLongitude = initialPlace?.longitude ?? initialCoordinates?.longitude ?? -73.995;
+  const initialLatitude = initialPlace?.latitude ?? initialCoordinates?.latitude ?? null;
+  const initialLongitude = initialPlace?.longitude ?? initialCoordinates?.longitude ?? null;
 
   const [name, setName] = useState(initialPlace?.name ?? "");
   const [notes, setNotes] = useState(initialPlace?.notes ?? "");
@@ -78,8 +80,8 @@ export function PlaceForm({
     return new Date();
   });
   const [tagIds, setTagIds] = useState<string[]>(initialPlace?.tagIds ?? []);
-  const [latitudeText, setLatitudeText] = useState(String(initialLatitude));
-  const [longitudeText, setLongitudeText] = useState(String(initialLongitude));
+  const [latitudeText, setLatitudeText] = useState(initialLatitude != null ? String(initialLatitude) : "");
+  const [longitudeText, setLongitudeText] = useState(initialLongitude != null ? String(initialLongitude) : "");
   const [coordinateError, setCoordinateError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -279,6 +281,11 @@ export function PlaceForm({
             onChange={(event) => {
               setLatitudeText(event.target.value);
               if (coordinateError) setCoordinateError(null);
+              const lat = Number(event.target.value);
+              const lng = Number(longitudeText);
+              if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                onCoordinatesChange?.({ longitude: lng, latitude: lat });
+              }
             }}
             placeholder="Latitude"
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
@@ -290,6 +297,11 @@ export function PlaceForm({
             onChange={(event) => {
               setLongitudeText(event.target.value);
               if (coordinateError) setCoordinateError(null);
+              const lat = Number(latitudeText);
+              const lng = Number(event.target.value);
+              if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                onCoordinatesChange?.({ longitude: lng, latitude: lat });
+              }
             }}
             placeholder="Longitude"
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"

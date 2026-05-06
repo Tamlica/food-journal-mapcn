@@ -8,7 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
+  MapPin,
   Pencil,
+  Route,
   Star,
   StarHalf,
   Trash2,
@@ -26,6 +28,9 @@ type PlaceDetailPanelProps = {
   onEdit: (place: Place) => void;
   onDelete: (placeId: string) => void;
   onClose: () => void;
+  onGetDirections: (placeCoords: { longitude: number; latitude: number }) => void;
+  isRouteLoading: boolean;
+  routeError: string | null;
 };
 
 export function PlaceDetailPanel({
@@ -34,6 +39,9 @@ export function PlaceDetailPanel({
   onEdit,
   onDelete,
   onClose,
+  onGetDirections,
+  isRouteLoading,
+  routeError,
 }: PlaceDetailPanelProps) {
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState<number | null>(null);
 
@@ -148,23 +156,49 @@ export function PlaceDetailPanel({
         </div>
       </div>
 
-      <div className="mt-auto flex items-center gap-2 pt-4">
+      <div className="mt-auto space-y-2 pt-4">
         <button
           type="button"
-          onClick={() => onEdit(place)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground transition hover:bg-accent"
+          onClick={() => onGetDirections({ longitude: place.longitude, latitude: place.latitude })}
+          disabled={isRouteLoading}
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground transition hover:bg-accent disabled:opacity-50"
         >
-          <Pencil className="size-3.5" />
-          Edit
+          {isRouteLoading ? (
+            <>
+              <MapPin className="size-3.5 animate-pulse" />
+              Finding route...
+            </>
+          ) : (
+            <>
+              <Route className="size-3.5" />
+              Get Directions
+            </>
+          )}
         </button>
-        <button
-          type="button"
-          onClick={() => onDelete(place.id)}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive transition hover:bg-destructive/20"
-        >
-          <Trash2 className="size-3.5" />
-          Delete
-        </button>
+        {routeError && (
+          <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {routeError}
+          </p>
+        )}
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(place)}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground transition hover:bg-accent"
+          >
+            <Pencil className="size-3.5" />
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(place.id)}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive transition hover:bg-destructive/20"
+          >
+            <Trash2 className="size-3.5" />
+            Delete
+          </button>
+        </div>
       </div>
 
       {fullscreenImageUrl ? (

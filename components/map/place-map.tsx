@@ -7,6 +7,7 @@ import {
   Map,
   MapClusterLayer,
   MapControls,
+  MapRoute,
   useMap,
   type MapRef,
 } from "@/components/ui/map";
@@ -20,6 +21,10 @@ type PlaceMapProps = {
   mapRef: React.RefObject<MapRef | null>;
   onPlaceSelect: (placeId: string) => void;
   onMapPick: (coords: { longitude: number; latitude: number }) => void;
+  routes: { coordinates: [number, number][]; distanceMeters: number; durationSeconds: number }[];
+  selectedRouteIndex: number;
+  onSelectRoute: (index: number) => void;
+  draftCoordinates: { longitude: number; latitude: number } | null;
 };
 
 const INDONESIA_CENTER: [number, number] = [113.9213, -0.7893];
@@ -318,12 +323,141 @@ function UserLocationLayer() {
   return null;
 }
 
+function TempPinLayer({ coordinates }: { coordinates: { longitude: number; latitude: number } | null }) {
+  const { map, isLoaded } = useMap();
+  const animationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!map || !isLoaded) return;
+
+    if (!coordinates) {
+      if (map.getSource("temp-pin")) {
+        if (animationIntervalRef.current) {
+          clearInterval(animationIntervalRef.current);
+        }
+        try {
+          if (map.getLayer("temp-pin-dot")) map.removeLayer("temp-pin-dot");
+          if (map.getLayer("temp-pin-pulse")) map.removeLayer("temp-pin-pulse");
+          if (map.getSource("temp-pin")) map.removeSource("temp-pin");
+        } catch {
+          // ignore
+        }
+      }
+      return;
+    }
+
+    const geojson: GeoJSON.FeatureCollection<GeoJSON.Point> = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [coordinates.longitude, coordinates.latitude],
+          },
+          properties: {
+            isTempPin: true,
+          },
+        },
+      ],
+    };
+
+    if (!map.getSource("temp-pin")) {
+      map.addSource("temp-pin", {
+        type: "geojson",
+        data: geojson,
+      });
+
+      map.addLayer({
+        id: "temp-pin-pulse",
+        type: "circle",
+        source: "temp-pin",
+        paint: {
+          "circle-radius": 16,
+          "circle-color": "#f59e0b",
+          "circle-opacity": 0.15,
+        },
+      });
+
+      map.addLayer({
+        id: "temp-pin-dot",
+        type: "circle",
+        source: "temp-pin",
+        paint: {
+          "circle-radius": 8,
+          "circle-color": "#f59e0b",
+          "circle-stroke-width": 2.5,
+          "circle-stroke-color": "white",
+        },
+      });
+
+      let pulsePhase = 0;
+      animationIntervalRef.current = setInterval(() => {
+        pulsePhase = (pulsePhase + 1) % 16;
+        const progress = pulsePhase / 16;
+        const easeProgress = Math.sin(progress * Math.PI);
+
+        map.setPaintProperty(
+          "temp-pin-pulse",
+          "circle-radius",
+          16 + easeProgress * 10
+        );
+        map.setPaintProperty(
+          "temp-pin-pulse",
+          "circle-opacity",
+          0.15 * (1 - easeProgress * 0.6)
+        );
+      }, 60);
+    } else {
+      (map.getSource("temp-pin") as MapLibreGL.GeoJSONSource).setData(geojson);
+    }
+
+    return () => {
+      if (animationIntervalRef.current) {
+        clearInterval(animationIntervalRef.current);
+      }
+    };
+  }, [map, isLoaded, coordinates]);
+
+  return null;
+}
+
+function DraftPinCenter({ coordinates }: { coordinates: { longitude: number; latitude: number } | null }) {
+  const { map, isLoaded } = useMap();
+  const hasCenteredRef = useRef(false);
+
+  useEffect(() => {
+    if (!map || !isLoaded || !coordinates) {
+      hasCenteredRef.current = false;
+      return;
+    }
+
+    hasCenteredRef.current = true;
+
+    const isMobile = window.innerWidth < 768;
+    const offset: [number, number] = isMobile ? [0, -window.innerHeight / 4] : [0, 0];
+
+    map.easeTo({
+      center: [coordinates.longitude, coordinates.latitude],
+      zoom: Math.max(map.getZoom(), 14),
+      duration: 500,
+      offset,
+    });
+  }, [map, isLoaded, coordinates]);
+
+  return null;
+}
+
 export function PlaceMap({
   places,
   selectedPlaceId,
   mapRef,
   onPlaceSelect,
   onMapPick,
+  routes,
+  selectedRouteIndex,
+  onSelectRoute,
+  draftCoordinates,
 }: PlaceMapProps) {
   const visitedData = useMemo(() => buildStatusGeoJson(places, "visited"), [places]);
   const wantToGoData = useMemo(() => buildStatusGeoJson(places, "want_to_go"), [places]);
@@ -348,6 +482,8 @@ export function PlaceMap({
       <AutoFitBounds places={places} />
       <UseInitialCenter places={places} />
       <UserLocationLayer />
+      <TempPinLayer coordinates={draftCoordinates} />
+      <DraftPinCenter coordinates={draftCoordinates} />
       <MapClickCapture onMapPick={onMapPick} />
 
       <MapClusterLayer
@@ -396,6 +532,29 @@ export function PlaceMap({
         showZoom
         showCompass
       />
+
+      {routes.length > 0 && routes.map((route, index) => (
+        <MapRoute
+          key={index}
+          id={`route-${index}`}
+          coordinates={route.coordinates}
+          color={index === selectedRouteIndex ? "#4285F4" : "#9AA0A6"}
+          width={index === selectedRouteIndex ? 6 : 4}
+          opacity={index === selectedRouteIndex ? 1 : 0.6}
+          interactive={index !== selectedRouteIndex}
+          onClick={() => onSelectRoute(index)}
+          onMouseEnter={() => {
+            if (index !== selectedRouteIndex && mapRef.current) {
+              mapRef.current.getCanvas().style.cursor = "pointer";
+            }
+          }}
+          onMouseLeave={() => {
+            if (mapRef.current) {
+              mapRef.current.getCanvas().style.cursor = "";
+            }
+          }}
+        />
+      ))}
 
       {selectedPlace && (
         <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border bg-card/90 px-4 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur">
