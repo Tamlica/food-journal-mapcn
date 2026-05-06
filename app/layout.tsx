@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Food Journal Map",
+  title: "MakanMap",
   description: "Personal food journal with a map-first interface",
 };
 
