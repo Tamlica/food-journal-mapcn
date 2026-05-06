@@ -1,4 +1,4 @@
-# Food Journal Map
+# MakanMap
 
 A full-featured food journal application with a map-first interface. Track places you've visited, want to visit, or want to avoid, complete with photos, ratings, and pricing information—all visualized on an interactive map.
 
