@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Filter, Plus, Search, X } from "lucide-react";
 
 import { PlaceMap } from "@/components/map/place-map";
@@ -10,15 +10,16 @@ import { PlaceForm } from "@/components/place/place-form";
 import { filterPlaces } from "@/lib/food-journal-utils";
 import { useFoodJournalStore } from "@/lib/stores/use-food-journal-store";
 import { useMapUiStore } from "@/lib/stores/use-map-ui-store";
+import { loadGoogleMapsPlaces } from "@/lib/hooks/use-google-places";
 import { getRoutes, formatDistance, formatDuration } from "@/lib/routing";
 import type { MapRef } from "@/components/ui/map";
 import type { Place } from "@/lib/types/food-journal";
 
 type SearchResult = {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
+  place_id: string;
+  description: string;
+  main_text: string;
+  secondary_text: string;
 };
 
 export default function Home() {
@@ -68,11 +69,33 @@ export default function Home() {
   const [searchValue, setSearchValue] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isMapsLoaded, setIsMapsLoaded] = useState(false);
+  const [mapsError, setMapsError] = useState<string | null>(null);
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
+
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    loadGoogleMapsPlaces()
+      .then(() => {
+        autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+        setIsMapsLoaded(true);
+      })
+      .catch((err: unknown) => {
+        setMapsError(err instanceof Error ? err.message : "Failed to load Google Maps");
+      });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const placeFormKey = useMemo(
     () => `${editingPlace?.id ?? 'new'}-${draftCoordinates?.latitude}-${draftCoordinates?.longitude}`,
@@ -95,42 +118,67 @@ export default function Home() {
     }
   }, [selectedPlace, isDetailOpen, closeDetail]);
 
-  const handleSearch = async (event: React.FormEvent) => {
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchValue(value);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    setSearchResults([]);
+
+    if (!value.trim() || !autocompleteServiceRef.current) return;
+
+    debounceRef.current = setTimeout(() => {
+      setIsSearching(true);
+      autocompleteServiceRef.current!.getPlacePredictions(
+        { input: value.trim() },
+        (predictions, status) => {
+          setIsSearching(false);
+          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSearchResults(
+              predictions.map((p) => ({
+                place_id: p.place_id,
+                description: p.description,
+                main_text: p.structured_formatting.main_text,
+                secondary_text: p.structured_formatting.secondary_text,
+              }))
+            );
+          }
+        }
+      );
+    }, 300);
+  }, []);
+
+  const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!searchValue.trim()) return;
+    if (searchResults.length > 0) {
+      handleSearchSelect(searchResults[0]);
+    }
+  };
+
+  const handleSearchSelect = async (result: SearchResult) => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return;
 
     setIsSearching(true);
 
     try {
-      const query = encodeURIComponent(searchValue.trim());
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=${query}`
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${result.place_id}&fields=geometry&key=${apiKey}`
       );
+      const data = await response.json();
 
-      if (!response.ok) {
-        setSearchResults([]);
-        return;
+      if (data.result?.geometry?.location) {
+        const { lat, lng } = data.result.geometry.location;
+        mapRef.current?.easeTo({ center: [lng, lat], zoom: 14, duration: 700 });
+        openAdd({ latitude: lat, longitude: lng });
       }
-
-      const data = (await response.json()) as SearchResult[];
-      setSearchResults(data);
+    } catch {
+      // silently fail
     } finally {
       setIsSearching(false);
+      setSearchResults([]);
+      setSearchValue("");
     }
-  };
-
-  const handleSearchSelect = (result: SearchResult) => {
-    const longitude = Number(result.lon);
-    const latitude = Number(result.lat);
-
-    mapRef.current?.easeTo({
-      center: [longitude, latitude],
-      zoom: 14,
-      duration: 700,
-    });
-
-    openAdd({ latitude, longitude });
-    setSearchResults([]);
   };
 
   const handleMapPick = (coords: { longitude: number; latitude: number }) => {
@@ -249,7 +297,7 @@ export default function Home() {
               <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <input
                 value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
+                onChange={(event) => handleSearchChange(event.target.value)}
                 placeholder="Search location"
                 className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
               />
@@ -264,9 +312,13 @@ export default function Home() {
             </button>
           </div>
 
-          {(isSearching || searchResults.length > 0) && (
+          {(mapsError || (searchValue.trim() && !isMapsLoaded) || isSearching || searchResults.length > 0) && (
             <div className="mt-2 rounded-md border border-border bg-background">
-              {isSearching ? (
+              {mapsError ? (
+                <p className="px-3 py-2 text-xs text-red-500">{mapsError}</p>
+              ) : !isMapsLoaded && searchValue.trim() ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">Loading Google Maps...</p>
+              ) : isSearching ? (
                 <p className="px-3 py-2 text-xs text-muted-foreground">Searching...</p>
               ) : (
                 <ul className="max-h-56 overflow-auto py-1">
@@ -275,9 +327,14 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => handleSearchSelect(result)}
-                        className="w-full px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                        className="w-full px-3 py-2 text-left transition hover:bg-accent"
                       >
-                        {result.display_name}
+                        <span className="block text-sm font-medium text-foreground">
+                          {result.main_text}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {result.secondary_text}
+                        </span>
                       </button>
                     </li>
                   ))}

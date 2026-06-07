@@ -121,7 +121,7 @@ export function PlaceDetailPanel({
         {place.notes ? (
           <div>
             <p className="mb-1 text-xs text-muted-foreground">Notes</p>
-            <p className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground">
+            <p className="break-words rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground">
               {place.notes}
             </p>
           </div>
