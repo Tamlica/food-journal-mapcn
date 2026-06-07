@@ -155,30 +155,28 @@ export default function Home() {
     }
   };
 
-  const handleSearchSelect = async (result: SearchResult) => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return;
-
+  const handleSearchSelect = (result: SearchResult) => {
     setIsSearching(true);
 
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${result.place_id}&fields=geometry&key=${apiKey}`
-      );
-      const data = await response.json();
+    const service = new google.maps.places.PlacesService(document.createElement("div"));
+    service.getDetails(
+      { placeId: result.place_id, fields: ["geometry"] },
+      (place, status) => {
+        setIsSearching(false);
+        setSearchResults([]);
+        setSearchValue("");
 
-      if (data.result?.geometry?.location) {
-        const { lat, lng } = data.result.geometry.location;
-        mapRef.current?.easeTo({ center: [lng, lat], zoom: 14, duration: 700 });
-        openAdd({ latitude: lat, longitude: lng });
+        if (
+          status === google.maps.places.PlacesServiceStatus.OK &&
+          place?.geometry?.location
+        ) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          mapRef.current?.easeTo({ center: [lng, lat], zoom: 14, duration: 700 });
+          openAdd({ latitude: lat, longitude: lng });
+        }
       }
-    } catch {
-      // silently fail
-    } finally {
-      setIsSearching(false);
-      setSearchResults([]);
-      setSearchValue("");
-    }
+    );
   };
 
   const handleMapPick = (coords: { longitude: number; latitude: number }) => {
@@ -302,14 +300,14 @@ export default function Home() {
                 className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
               />
             </form>
-            <button
+            {/* <button
               type="button"
               onClick={handleOpenAdd}
               className="hidden items-center gap-1 rounded-md border border-border bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition hover:opacity-90 md:inline-flex"
             >
               <Plus className="size-3.5" />
               Add Place
-            </button>
+            </button> */}
           </div>
 
           {(mapsError || (searchValue.trim() && !isMapsLoaded) || isSearching || searchResults.length > 0) && (
