@@ -180,7 +180,11 @@ export default function Home() {
   };
 
   const handleMapPick = (coords: { longitude: number; latitude: number }) => {
-    closeDetail();
+    if (isAddOpen || isDetailOpen) {
+      closeAdd();
+      closeDetail();
+      return;
+    }
     openAdd({ latitude: coords.latitude, longitude: coords.longitude });
     setEditingPlace(null);
   };
