@@ -1,0 +1,510 @@
+/* Hallmark · pre-emit critique: P5 H4 E4 S4 R4 V4
+ * genre: editorial · macrostructure: Workbench + H2 Split Diptych hero (expansion of the product-tour
+ * redesign) · theme: custom dark editorial (charcoal paper + muted moss accent, shared brand hue with
+ * /app, unchanged) · enrichment: real product screenshots (map / add-place / filters), motion via
+ * `motion` (whileInView + accordion height) · nav: N9 Edge-aligned minimal · footer: Ft6 Letter close
+ * (unchanged) · axes: dark / classical-serif-display / chromatic-other (moss) · studied: no
+ */
+@import "./tokens.css";
+
+.marketing {
+  overflow-x: clip;
+  min-height: 100dvh;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+.marketing .page {
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+
+/* ---------- Nav — N9 edge-aligned minimal ---------- */
+
+.marketing .nav-edge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-block: var(--space-lg);
+}
+
+.marketing .wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-md);
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.marketing .cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 1px solid oklch(74% 0.1 145 / 45%);
+  padding-bottom: 0.1em;
+  transition: border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.marketing .cta-link:hover {
+  border-color: var(--color-accent);
+}
+
+.marketing .cta-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.marketing .cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-accent-ink);
+  background: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: background var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.marketing .cta-button:hover {
+  background: oklch(80% 0.1 145);
+}
+
+.marketing .cta-button:active {
+  transform: translateY(1px);
+}
+
+.marketing .cta-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ---------- Section heads — small, functional, no eyebrows ---------- */
+
+.marketing main {
+  padding-block: var(--space-lg) var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xl);
+}
+
+.marketing .section-head {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: normal;
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-lg);
+  max-width: 30ch;
+}
+
+/* ---------- Hero — H2 split diptych ---------- */
+
+.marketing .hero {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: var(--space-2xl);
+  align-items: center;
+  padding-block: var(--space-lg) 0;
+}
+
+.marketing .hero__copy {
+  max-width: 34rem;
+}
+
+.marketing .hero__headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: normal;
+  font-size: var(--text-display-s);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-md);
+  max-width: 22ch;
+}
+
+.marketing .hero__lede {
+  font-size: var(--text-md);
+  line-height: 1.55;
+  color: var(--color-ink-muted);
+  margin: 0 0 var(--space-xl);
+  max-width: 42ch;
+}
+
+.marketing .hero__shot {
+  margin: 0;
+  width: 100%;
+}
+
+.marketing .hero__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+}
+
+.marketing .hero__shot figcaption {
+  margin-top: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  max-width: 42ch;
+}
+
+.marketing .hero__shot figcaption strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* ---------- Quick facts — real, not invented ---------- */
+
+.marketing .facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-lg);
+  padding-block: var(--space-lg);
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.marketing .facts strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.marketing .facts span:not(:last-child)::after {
+  content: "·";
+  margin-left: var(--space-lg);
+  color: var(--color-ink-muted);
+}
+
+/* ---------- Tour — Workbench screenshot sequence ---------- */
+
+.marketing .tour {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xl);
+}
+
+.marketing .tour-section {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: var(--space-2xl);
+  align-items: center;
+}
+
+.marketing .tour-section--end .screenshot-frame {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.marketing .tour-section--end .tour-section__copy {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.marketing .screenshot-frame {
+  margin: 0;
+  width: 100%;
+}
+
+.marketing .screenshot-frame__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+}
+
+.marketing .tour-section__copy {
+  max-width: 26rem;
+}
+
+.marketing .tour-section__heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: normal;
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-sm);
+  max-width: 20ch;
+}
+
+.marketing .tour-caption {
+  max-width: 40ch;
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  margin: 0;
+}
+
+.marketing .tour-caption strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* ---------- Info — honest feature facts, tabular rows ---------- */
+
+.marketing .info-rows {
+  max-width: 46rem;
+}
+
+.marketing .info-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr;
+  gap: var(--space-md) var(--space-lg);
+  padding-block: var(--space-md);
+  border-top: 1px solid var(--color-rule);
+}
+
+.marketing .info-row:last-child {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.marketing .info-row__label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.marketing .info-row__desc {
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  margin: 0;
+  max-width: 48ch;
+}
+
+/* ---------- Founder's note ---------- */
+
+.marketing .founder-note {
+  max-width: 40rem;
+}
+
+.marketing .founder-note p {
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-md);
+  max-width: 48ch;
+}
+
+.marketing .founder-note__sign {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  margin-top: var(--space-lg);
+}
+
+/* ---------- FAQ — animated accordion ---------- */
+
+.marketing .faq {
+  max-width: 46rem;
+}
+
+.marketing .faq-item {
+  border-top: 1px solid var(--color-rule);
+}
+
+.marketing .faq-item:last-child {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.marketing .faq-item__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  width: 100%;
+  padding-block: var(--space-md);
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.marketing .faq-item__question:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.marketing .faq-item__marker {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: var(--text-md);
+  color: var(--color-accent);
+}
+
+.marketing .faq-item__answer-wrap {
+  overflow: hidden;
+}
+
+.marketing .faq-item__answer {
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  max-width: 48ch;
+  margin: 0 0 var(--space-md);
+}
+
+/* ---------- Sticky bottom CTA ---------- */
+
+.marketing .sticky-cta {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-lg);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 999px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper-2);
+  box-shadow: 0 1px 2px oklch(10% 0.01 145 / 0.3);
+  transform: translate(-50%, 0);
+}
+
+.marketing .sticky-cta .cta-link {
+  border-bottom-color: transparent;
+  padding-bottom: 0;
+}
+
+.marketing .sticky-cta .cta-link:hover {
+  border-bottom-color: var(--color-accent);
+}
+
+/* ---------- Footer — Ft6 letter close (unchanged) ---------- */
+
+.marketing footer.foot-letter {
+  border-top: 1px solid var(--color-rule);
+  padding: var(--space-2xl) 0 var(--space-2xl);
+}
+
+.marketing .foot-letter__inner {
+  max-width: 40rem;
+  margin-inline: 0 auto;
+}
+
+.marketing .foot-letter__close {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-md);
+}
+
+.marketing .foot-letter__sign {
+  font-style: normal;
+  font-weight: 600;
+}
+
+.marketing .foot-letter__ps {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  margin: 0;
+}
+
+.marketing .foot-letter__ps .cta-link {
+  color: var(--color-accent);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 60rem) {
+  .marketing .hero {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+
+  .marketing .hero__copy {
+    max-width: none;
+  }
+
+  .marketing .tour-section {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .marketing .tour-section--end .screenshot-frame,
+  .marketing .tour-section--end .tour-section__copy {
+    grid-column: 1;
+  }
+
+  .marketing .tour-section--end .screenshot-frame {
+    grid-row: 1;
+  }
+
+  .marketing .tour-section--end .tour-section__copy {
+    grid-row: 2;
+  }
+
+  .marketing .tour-section__copy {
+    max-width: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .marketing .info-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2xs);
+  }
+
+  .marketing .sticky-cta {
+    left: var(--page-gutter);
+    right: var(--page-gutter);
+    bottom: var(--space-md);
+    transform: none;
+    justify-content: center;
+  }
+}
+
+/* ---------- Motion fallback ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing * {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

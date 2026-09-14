@@ -1,0 +1,15 @@
+{
+  "scanned": "2026-09-14",
+  "fontStack": "Geist Sans / Geist Mono via next/font/google (app/layout.tsx)",
+  "palette": "Tailwind v4 OKLCH custom properties, shadcn/ui new-york/gray, dark-mode only (app/globals.css)",
+  "motion": "none detected (motion-cut)",
+  "spacing": "Tailwind v4 default scale",
+  "framework": "Next.js 16 App Router",
+  "preserved": ["Geist Sans/Mono font stack"],
+  "introduced": [
+    "app/(marketing) route group — landing page",
+    "app/(app) route group — moved dashboard to /app",
+    "custom dark moss/charcoal token system for the landing page",
+    "re-tinted app/globals.css .dark block to the shared moss brand hue"
+  ]
+}

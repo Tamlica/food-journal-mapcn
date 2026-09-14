@@ -1,0 +1,29 @@
+[
+  {
+    "date": "2026-09-14",
+    "macrostructure": "Workbench + H2 Split Diptych hero",
+    "theme": "custom",
+    "theme_axes": "dark / classical-serif-display / chromatic-other (moss)",
+    "vibe": "expansion: real hero, honest info/founder-note/FAQ sections instead of a fake testimonial",
+    "enrichment": "3 real product screenshots (map hero / add-place / filters) + motion whileInView + FAQ accordion",
+    "brief": "MakanMap · landing page still felt plain — added hero, info block, founder's note, FAQ (no fabricated testimonial)"
+  },
+  {
+    "date": "2026-09-14",
+    "macrostructure": "Workbench",
+    "theme": "custom",
+    "theme_axes": "dark / classical-serif-display / chromatic-other (moss)",
+    "vibe": "product-tour redesign: same brand system, screenshot-led, less prose",
+    "enrichment": "3 real product screenshots (map / add-place / filters) + motion whileInView",
+    "brief": "MakanMap · redesign of the landing page — more image/screenshot, real animation via `motion`"
+  },
+  {
+    "date": "2026-09-14",
+    "macrostructure": "Long Document",
+    "theme": "custom",
+    "theme_axes": "dark / classical-serif-display / chromatic-other (moss)",
+    "vibe": "quiet, warm, dark editorial food journal",
+    "enrichment": "none (Tier-A CSS marginalia only)",
+    "brief": "MakanMap · landing page for a map-first food journal app"
+  }
+]

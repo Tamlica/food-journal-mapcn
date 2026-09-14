@@ -1,0 +1,37 @@
+/* Hallmark tokens · scoped to .marketing so /app's shadcn tokens are untouched */
+.marketing {
+  --color-paper: oklch(15% 0.014 145);
+  --color-paper-2: oklch(19% 0.016 145);
+  --color-ink: oklch(94% 0.006 145);
+  --color-ink-muted: oklch(70% 0.02 145);
+  --color-accent: oklch(74% 0.1 145);
+  --color-accent-ink: oklch(16% 0.02 145);
+  --color-rule: oklch(94% 0.006 145 / 14%);
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+  --space-4xl: 9rem;
+
+  --text-xs: 0.8rem;
+  --text-sm: 0.9rem;
+  --text-base: 1.0625rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+  --text-xl: 1.9531rem;
+  --text-display: clamp(2.25rem, 4vw + 1rem, 3.4rem);
+  --text-display-s: clamp(1.75rem, 2.6vw + 1rem, 2.6rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-base: 200ms;
+
+  --page-gutter: clamp(1.25rem, 5vw, 3rem);
+}
