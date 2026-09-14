@@ -1335,18 +1335,37 @@ function MapClusterLayer<
           map.addImage(pointIconId, image, { sdf: false });
         }
         if (!map.getLayer(pointIconLayerId)) {
-          map.addLayer({
-            id: pointIconLayerId,
-            type: "symbol",
-            source: sourceId,
-            filter: ["!", ["has", "point_count"]],
-            layout: {
-              "icon-image": pointIconId,
-              "icon-size": pointIconSize,
-              "icon-allow-overlap": true,
-              "icon-ignore-placement": true,
+          // The image decode above is async, so sibling MapClusterLayer
+          // instances (other statuses) can finish loading their icon in
+          // any order — inserting at the default "top of stack" would let
+          // whichever icon happens to resolve first render above layers
+          // that are supposed to be on top of it (e.g. a later status's
+          // circle). Anchor this icon immediately above this layer's own
+          // circle/label instead, so it always stays grouped with its
+          // circle regardless of load order.
+          const anchorLayerId = pointLabel ? pointLabelLayerId : unclusteredLayerId;
+          const styleLayers = map.getStyle()?.layers ?? [];
+          const anchorIndex = styleLayers.findIndex(
+            (layer) => layer.id === anchorLayerId
+          );
+          const beforeId =
+            anchorIndex >= 0 ? styleLayers[anchorIndex + 1]?.id : undefined;
+
+          map.addLayer(
+            {
+              id: pointIconLayerId,
+              type: "symbol",
+              source: sourceId,
+              filter: ["!", ["has", "point_count"]],
+              layout: {
+                "icon-image": pointIconId,
+                "icon-size": pointIconSize,
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+              },
             },
-          });
+            beforeId
+          );
         }
       };
       image.src = svgDataUrl;
