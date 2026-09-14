@@ -33,7 +33,8 @@ function RevealSection({
 const faqItems = [
   {
     question: "Do I need to sign up?",
-    answer: "No account, no login — open the map and start pinning places.",
+    answer:
+      "Yes — a free account keeps your pins yours, private from everyone else's map.",
   },
   {
     question: "Does it only work in Jakarta?",

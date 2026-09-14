@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Filter, Plus, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Filter, LogOut, Plus, Search, X } from "lucide-react";
 
 import { PlaceMap } from "@/components/map/place-map";
 import { FilterPanel } from "@/components/place/filter-panel";
@@ -12,6 +13,7 @@ import { useFoodJournalStore } from "@/lib/stores/use-food-journal-store";
 import { useMapUiStore } from "@/lib/stores/use-map-ui-store";
 import { loadGoogleMapsPlaces } from "@/lib/hooks/use-google-places";
 import { getRoutes, formatDistance, formatDuration } from "@/lib/routing";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { MapRef } from "@/components/ui/map";
 import type { Place } from "@/lib/types/food-journal";
 
@@ -23,6 +25,7 @@ type SearchResult = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const mapRef = useRef<MapRef | null>(null);
 
   const {
@@ -177,6 +180,13 @@ export default function Home() {
         }
       }
     );
+  };
+
+  const handleSignOut = async () => {
+    const supabase = getSupabaseBrowserClient();
+    await supabase?.auth.signOut();
+    router.push("/login");
+    router.refresh();
   };
 
   const handleMapPick = (coords: { longitude: number; latitude: number }) => {
@@ -346,38 +356,58 @@ export default function Home() {
           )}
         </div>
 
-        <div className="pointer-events-auto absolute right-3 top-3 hidden items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur md:inline-flex">
-          <span
-            className={`inline-block size-2 rounded-full ${
-              connectionStatus === "connected"
-                ? "bg-emerald-500"
-                : connectionStatus === "checking"
-                  ? "bg-amber-500"
-                  : "bg-red-500"
-            }`}
-          />
-          {connectionStatus === "connected"
-            ? "Supabase connected"
-            : connectionStatus === "checking"
-              ? "Checking Supabase"
-              : "Supabase disconnected"}
+        <div className="pointer-events-auto absolute right-3 top-3 hidden items-center gap-2 md:inline-flex">
+          {/* <div className="flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                connectionStatus === "connected"
+                  ? "bg-emerald-500"
+                  : connectionStatus === "checking"
+                    ? "bg-amber-500"
+                    : "bg-red-500"
+              }`}
+            />
+            {connectionStatus === "connected"
+              ? "Supabase connected"
+              : connectionStatus === "checking"
+                ? "Checking Supabase"
+                : "Supabase disconnected"}
+          </div> */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            title="Sign out"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground cursor-pointer"
+          >
+            <LogOut className="size-3.5" />
+          </button>
         </div>
 
-        <div className="pointer-events-auto absolute right-3 top-18 flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur md:hidden">
-          <span
-            className={`inline-block size-2 rounded-full ${
-              connectionStatus === "connected"
-                ? "bg-emerald-500"
-                : connectionStatus === "checking"
-                  ? "bg-amber-500"
-                  : "bg-red-500"
-            }`}
-          />
-          {connectionStatus === "connected"
-            ? "Supabase connected"
-            : connectionStatus === "checking"
-              ? "Checking Supabase"
-              : "Supabase disconnected"}
+        <div className="pointer-events-auto absolute right-3 top-18 flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                connectionStatus === "connected"
+                  ? "bg-emerald-500"
+                  : connectionStatus === "checking"
+                    ? "bg-amber-500"
+                    : "bg-red-500"
+              }`}
+            />
+            {connectionStatus === "connected"
+              ? "Supabase connected"
+              : connectionStatus === "checking"
+                ? "Checking Supabase"
+                : "Supabase disconnected"}
+          </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            title="Sign out"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground"
+          >
+            <LogOut className="size-3.5" />
+          </button>
         </div>
 
         <div className="pointer-events-auto absolute left-3 top-18">

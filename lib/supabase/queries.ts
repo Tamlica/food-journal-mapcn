@@ -62,8 +62,13 @@ async function uploadPlaceImage(placeId: string, file: File) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
   const extension = file.name.split(".").pop() || "jpg";
-  const filePath = `places/${placeId}/${crypto.randomUUID()}.${extension}`;
+  const filePath = `places/${user.id}/${placeId}/${crypto.randomUUID()}.${extension}`;
 
   const { error } = await supabase.storage
     .from(PLACE_IMAGE_BUCKET)
