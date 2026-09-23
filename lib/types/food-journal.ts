@@ -22,6 +22,7 @@ export type Place = {
   imageUrls: string[];
   imageUrl?: string | null;
   tagIds: string[];
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -45,6 +46,7 @@ export type CreatePlaceInput = {
   latitude: number;
   longitude: number;
   tagIds?: string[];
+  isPublic?: boolean;
   imageFiles?: File[];
 };
 

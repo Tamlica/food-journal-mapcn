@@ -18,6 +18,7 @@ type PlaceRow = {
   longitude: number;
   image_urls?: string[] | null;
   image_url?: string | null;
+  is_public?: boolean | null;
   created_at: string;
   updated_at: string;
   place_tags?: Array<{ tag_id: string }>;
@@ -51,6 +52,7 @@ function mapPlaceRow(row: PlaceRow): Place {
     imageUrls,
     imageUrl: imageUrls[0] ?? null,
     tagIds: row.place_tags?.map((tag) => tag.tag_id) ?? [],
+    isPublic: row.is_public ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -197,6 +199,7 @@ export async function createPlace(input: CreatePlaceInput): Promise<Place | null
     visit_date: input.visitDate ?? null,
     latitude: input.latitude,
     longitude: input.longitude,
+    is_public: input.isPublic ?? false,
   };
 
   const { data, error } = await supabase
@@ -249,6 +252,7 @@ export async function updatePlace(
   if (input.visitDate !== undefined) payload.visit_date = input.visitDate || null;
   if (input.latitude !== undefined) payload.latitude = input.latitude;
   if (input.longitude !== undefined) payload.longitude = input.longitude;
+  if (input.isPublic !== undefined) payload.is_public = input.isPublic;
 
   if (Object.keys(payload).length > 0) {
     const { error } = await supabase
@@ -303,5 +307,21 @@ export async function deletePlace(placeId: string): Promise<void> {
   if (!supabase) return;
 
   const { error } = await supabase.from("places").delete().eq("id", placeId);
+  if (error) throw error;
+}
+
+export async function setPlacesPublicByStatus(
+  status: Place["status"],
+  isPublic: boolean
+): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return;
+
+  // RLS already limits this to the caller's own places.
+  const { error } = await supabase
+    .from("places")
+    .update({ is_public: isPublic })
+    .eq("status", status);
+
   if (error) throw error;
 }

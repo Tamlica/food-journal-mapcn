@@ -11,6 +11,8 @@ const inputClassName =
 
 type Mode = "sign-in" | "sign-up";
 
+const USERNAME_PATTERN = /^[a-z0-9_]{3,30}$/;
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,6 +20,7 @@ export function LoginForm() {
 
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -56,10 +59,29 @@ export function LoginForm() {
       return;
     }
 
+    const normalizedUsername = username.trim().toLowerCase();
+    if (!USERNAME_PATTERN.test(normalizedUsername)) {
+      setIsSubmitting(false);
+      setError("Username must be 3–30 characters: letters, numbers or underscores.");
+      return;
+    }
+
+    const { data: isAvailable } = await supabase.rpc("is_username_available", {
+      candidate: normalizedUsername,
+    });
+    if (isAvailable === false) {
+      setIsSubmitting(false);
+      setError("That username is already taken.");
+      return;
+    }
+
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/login` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+        data: { username: normalizedUsername },
+      },
     });
     setIsSubmitting(false);
     if (signUpError) {
@@ -117,6 +139,27 @@ export function LoginForm() {
             className={inputClassName}
           />
         </label>
+
+        {mode === "sign-up" && (
+          <label className="flex flex-col gap-1 text-sm text-foreground">
+            Username
+            <input
+              type="text"
+              required
+              minLength={3}
+              maxLength={30}
+              pattern="[A-Za-z0-9_]{3,30}"
+              autoComplete="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              disabled={isBusy}
+              className={inputClassName}
+            />
+            <span className="text-xs text-muted-foreground">
+              Used for your public page. Letters, numbers and underscores.
+            </span>
+          </label>
+        )}
 
         <label className="flex flex-col gap-1 text-sm text-foreground">
           Password

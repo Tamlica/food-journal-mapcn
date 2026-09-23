@@ -80,6 +80,7 @@ export function PlaceForm({
     return new Date();
   });
   const [tagIds, setTagIds] = useState<string[]>(initialPlace?.tagIds ?? []);
+  const [isPublic, setIsPublic] = useState(initialPlace?.isPublic ?? false);
   const [latitudeText, setLatitudeText] = useState(initialLatitude != null ? String(initialLatitude) : "");
   const [longitudeText, setLongitudeText] = useState(initialLongitude != null ? String(initialLongitude) : "");
   const [coordinateError, setCoordinateError] = useState<string | null>(null);
@@ -162,6 +163,7 @@ export function PlaceForm({
       latitude: resolvedCoordinates.latitude,
       longitude: resolvedCoordinates.longitude,
       tagIds,
+      isPublic,
       imageFiles: imageFiles.length > 0 ? imageFiles : undefined,
     });
     setIsSubmitting(false);
@@ -561,6 +563,21 @@ export function PlaceForm({
           </div>
         ) : null}
       </div>
+
+      <label className="flex items-start gap-2 text-sm text-foreground">
+        <input
+          type="checkbox"
+          checked={isPublic}
+          onChange={(event) => setIsPublic(event.target.checked)}
+          className="mt-0.5 size-4 cursor-pointer"
+        />
+        <span>
+          Show on my public page
+          <span className="block text-[11px] text-muted-foreground">
+            Notes stay private. Only visible if your public page is turned on.
+          </span>
+        </span>
+      </label>
 
       <div className="space-y-2">
         <label className="text-xs text-muted-foreground">Tags</label>

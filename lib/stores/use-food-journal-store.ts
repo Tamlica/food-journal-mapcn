@@ -7,6 +7,7 @@ import {
   deletePlace,
   listPlaces,
   listTags,
+  setPlacesPublicByStatus,
   updatePlace,
 } from "@/lib/supabase/queries";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -47,6 +48,7 @@ type FoodJournalState = {
   addPlace: (input: CreatePlaceInput) => Promise<void>;
   editPlace: (placeId: string, input: UpdatePlaceInput) => Promise<void>;
   removePlace: (placeId: string) => Promise<void>;
+  setPublicByStatus: (status: Place["status"], isPublic: boolean) => Promise<void>;
   addTag: (input: { name: string; color: string }) => Promise<void>;
   setFilters: (patch: Partial<PlaceFilters>) => void;
   toggleStatus: (status: Place["status"]) => void;
@@ -108,6 +110,7 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
       imageUrls: [],
       imageUrl: null,
       tagIds: input.tagIds ?? [],
+      isPublic: input.isPublic ?? false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -159,6 +162,7 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
         ...("latitude" in input ? { latitude: input.latitude ?? place.latitude } : {}),
         ...("longitude" in input ? { longitude: input.longitude ?? place.longitude } : {}),
         ...("tagIds" in input ? { tagIds: input.tagIds ?? [] } : {}),
+        ...("isPublic" in input ? { isPublic: input.isPublic ?? false } : {}),
         updatedAt: new Date().toISOString(),
       };
     });
@@ -198,6 +202,29 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
           ? "disconnected"
           : state.connectionStatus,
         errorMessage: getErrorMessage(error, "Could not delete place from Supabase."),
+      }));
+    }
+  },
+
+  setPublicByStatus: async (status, isPublic) => {
+    const before = get().places;
+    set((state) => ({
+      places: state.places.map((place) =>
+        place.status === status ? { ...place, isPublic } : place
+      ),
+      errorMessage: null,
+    }));
+
+    try {
+      await setPlacesPublicByStatus(status, isPublic);
+      set({ connectionStatus: "connected" });
+    } catch (error) {
+      set((state) => ({
+        places: before,
+        connectionStatus: isConnectionError(error)
+          ? "disconnected"
+          : state.connectionStatus,
+        errorMessage: getErrorMessage(error, "Could not update places in Supabase."),
       }));
     }
   },

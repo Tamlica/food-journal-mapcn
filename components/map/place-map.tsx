@@ -20,11 +20,12 @@ type PlaceMapProps = {
   selectedPlaceId: string | null;
   mapRef: React.RefObject<MapRef | null>;
   onPlaceSelect: (placeId: string) => void;
-  onMapPick: (coords: { longitude: number; latitude: number }) => void;
-  routes: { coordinates: [number, number][]; distanceMeters: number; durationSeconds: number }[];
-  selectedRouteIndex: number;
-  onSelectRoute: (index: number) => void;
-  draftCoordinates: { longitude: number; latitude: number } | null;
+  /** Omit onMapPick (and the draft/route props) for a read-only map. */
+  onMapPick?: (coords: { longitude: number; latitude: number }) => void;
+  routes?: { coordinates: [number, number][]; distanceMeters: number; durationSeconds: number }[];
+  selectedRouteIndex?: number;
+  onSelectRoute?: (index: number) => void;
+  draftCoordinates?: { longitude: number; latitude: number } | null;
 };
 
 const INDONESIA_CENTER: [number, number] = [113.9213, -0.7893];
@@ -454,10 +455,10 @@ export function PlaceMap({
   mapRef,
   onPlaceSelect,
   onMapPick,
-  routes,
-  selectedRouteIndex,
+  routes = [],
+  selectedRouteIndex = 0,
   onSelectRoute,
-  draftCoordinates,
+  draftCoordinates = null,
 }: PlaceMapProps) {
   const visitedData = useMemo(() => buildStatusGeoJson(places, "visited"), [places]);
   const wantToGoData = useMemo(() => buildStatusGeoJson(places, "want_to_go"), [places]);
@@ -484,7 +485,7 @@ export function PlaceMap({
       <UserLocationLayer />
       <TempPinLayer coordinates={draftCoordinates} />
       <DraftPinCenter coordinates={draftCoordinates} />
-      <MapClickCapture onMapPick={onMapPick} />
+      {onMapPick && <MapClickCapture onMapPick={onMapPick} />}
 
       <MapClusterLayer
         data={visitedData}
@@ -542,7 +543,7 @@ export function PlaceMap({
           width={index === selectedRouteIndex ? 6 : 4}
           opacity={index === selectedRouteIndex ? 1 : 0.6}
           interactive={index !== selectedRouteIndex}
-          onClick={() => onSelectRoute(index)}
+          onClick={() => onSelectRoute?.(index)}
           onMouseEnter={() => {
             if (index !== selectedRouteIndex && mapRef.current) {
               mapRef.current.getCanvas().style.cursor = "pointer";

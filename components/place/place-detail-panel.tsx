@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
+  Globe,
   MapPin,
   Pencil,
   Route,
@@ -25,8 +26,9 @@ import type { JournalTag, Place } from "@/lib/types/food-journal";
 type PlaceDetailPanelProps = {
   place: Place | null;
   tags: JournalTag[];
-  onEdit: (place: Place) => void;
-  onDelete: (placeId: string) => void;
+  /** Omit onEdit/onDelete to render the panel read-only (public page). */
+  onEdit?: (place: Place) => void;
+  onDelete?: (placeId: string) => void;
   onClose: () => void;
   onGetDirections: (placeCoords: { longitude: number; latitude: number }) => void;
   isRouteLoading: boolean;
@@ -72,7 +74,10 @@ export function PlaceDetailPanel({
   });
 
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-border bg-card/95 p-4 shadow-sm backdrop-blur">
+    <>
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-sm backdrop-blur">
+      {/* Scroll area is inset from the card edge so the scrollbar stays inside it. */}
+      <div className="m-1.5 flex min-h-0 flex-1 flex-col overflow-y-auto p-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-foreground">{place.name}</h3>
@@ -80,6 +85,12 @@ export function PlaceDetailPanel({
             <span className={`inline-block size-2 rounded-full ${status.dotClassName}`} />
             {status.label}
           </div>
+          {onEdit && place.isPublic ? (
+            <div className="ml-1.5 mt-1 inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+              <Globe className="size-3" />
+              Public
+            </div>
+          ) : null}
         </div>
         <button
           type="button"
@@ -181,25 +192,29 @@ export function PlaceDetailPanel({
           </p>
         )}
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onEdit(place)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground transition hover:bg-accent"
-          >
-            <Pencil className="size-3.5" />
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(place.id)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive transition hover:bg-destructive/20"
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </button>
-        </div>
+        {onEdit && onDelete ? (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit(place)}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs text-foreground transition hover:bg-accent"
+            >
+              <Pencil className="size-3.5" />
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(place.id)}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive transition hover:bg-destructive/20"
+            >
+              <Trash2 className="size-3.5" />
+              Delete
+            </button>
+          </div>
+        ) : null}
       </div>
+      </div>
+    </section>
 
       {fullscreenImageUrl ? (
         <div
@@ -258,6 +273,6 @@ export function PlaceDetailPanel({
           />
         </div>
       ) : null}
-    </section>
+    </>
   );
 }

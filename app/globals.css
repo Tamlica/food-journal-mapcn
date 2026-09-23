@@ -129,6 +129,46 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Theme-matched scrollbars everywhere (lists, panels, modals).
+     Firefox: standard properties. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 70%, transparent)
+      transparent;
+  }
+
+  /* Chromium/Safari: the standard properties above would suppress the
+     ::-webkit-scrollbar rules and leave the default arrow buttons, so reset
+     them and style the pieces directly (rounded thumb, no arrows). */
+  @supports selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: auto;
+      scrollbar-color: auto;
+    }
+    *::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    *::-webkit-scrollbar-track,
+    *::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      border-radius: 9999px;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background-color: color-mix(in oklab, var(--muted-foreground) 85%, transparent);
+    }
+  }
 }
 
 @keyframes pulse-user-location {

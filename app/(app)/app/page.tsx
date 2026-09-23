@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Filter, Loader2, LogOut, Plus, Search, X } from "lucide-react";
+import { Filter, Plus, Search, X } from "lucide-react";
 
+import { AccountMenu } from "@/components/account/account-menu";
 import { PlaceMap } from "@/components/map/place-map";
 import { FilterPanel } from "@/components/place/filter-panel";
 import { PlaceDetailPanel } from "@/components/place/place-detail-panel";
@@ -376,19 +377,7 @@ export default function Home() {
                 ? "Checking Supabase"
                 : "Supabase disconnected"}
           </div> */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={isSigningOut}
-            title="Sign out"
-            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSigningOut ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <LogOut className="size-3.5" />
-            )}
-          </button>
+          <AccountMenu onSignOut={handleSignOut} isSigningOut={isSigningOut} />
         </div>
 
         <div className="pointer-events-auto absolute right-3 top-18 flex items-center gap-2 md:hidden">
@@ -408,19 +397,7 @@ export default function Home() {
                 ? "Checking Supabase"
                 : "Supabase disconnected"}
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={isSigningOut}
-            title="Sign out"
-            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSigningOut ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <LogOut className="size-3.5" />
-            )}
-          </button>
+          <AccountMenu onSignOut={handleSignOut} isSigningOut={isSigningOut} />
         </div>
 
         <div className="pointer-events-auto absolute left-3 top-18">
@@ -483,7 +460,8 @@ export default function Home() {
         ) : null}
 
         {isAddOpen && (
-          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
+          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 max-h-[50dvh] overflow-hidden rounded-2xl border border-border bg-card shadow-sm ${showMobilePanel}`}>
+            <div className="m-1.5 max-h-[calc(50dvh-1.75rem)] overflow-y-auto p-2.5">
             <PlaceForm
               key={placeFormKey}
               title={editingPlace ? "Edit Place" : "Add Place"}
@@ -498,6 +476,7 @@ export default function Home() {
               }}
               onCoordinatesChange={handleCoordinatesChange}
             />
+            </div>
           </div>
         )}
 
@@ -519,7 +498,7 @@ export default function Home() {
                   <X className="size-4" />
                 </button>
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="-mr-2.5 min-h-0 flex-1 overflow-y-auto pr-2.5">
                 <PlaceForm
                   key={placeFormKey}
                   title={editingPlace ? "Edit Place" : "Add Place"}
@@ -540,7 +519,7 @@ export default function Home() {
         )}
 
         {selectedPlace && isDetailOpen && (
-          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
+          <div className={`pointer-events-auto fixed inset-x-3 bottom-3 z-40 flex max-h-[55dvh] flex-col rounded-2xl border border-border bg-card p-4 shadow-sm ${showMobilePanel}`}>
             <PlaceDetailPanel
               place={selectedPlace}
               tags={tags}
