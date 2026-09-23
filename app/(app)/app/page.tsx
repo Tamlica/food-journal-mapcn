@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Filter, LogOut, Plus, Search, X } from "lucide-react";
+import { Filter, Loader2, LogOut, Plus, Search, X } from "lucide-react";
 
 import { PlaceMap } from "@/components/map/place-map";
 import { FilterPanel } from "@/components/place/filter-panel";
@@ -69,6 +69,7 @@ export default function Home() {
     updateDraftCoordinates,
   } = useMapUiStore();
 
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -183,6 +184,8 @@ export default function Home() {
   };
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
     const supabase = getSupabaseBrowserClient();
     await supabase?.auth.signOut();
     router.push("/login");
@@ -376,10 +379,15 @@ export default function Home() {
           <button
             type="button"
             onClick={handleSignOut}
+            disabled={isSigningOut}
             title="Sign out"
-            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground cursor-pointer"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <LogOut className="size-3.5" />
+            {isSigningOut ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <LogOut className="size-3.5" />
+            )}
           </button>
         </div>
 
@@ -403,10 +411,15 @@ export default function Home() {
           <button
             type="button"
             onClick={handleSignOut}
+            disabled={isSigningOut}
             title="Sign out"
-            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-background/90 p-1.5 text-muted-foreground shadow-sm backdrop-blur transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <LogOut className="size-3.5" />
+            {isSigningOut ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <LogOut className="size-3.5" />
+            )}
           </button>
         </div>
 

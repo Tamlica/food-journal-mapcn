@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -19,9 +20,11 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const isBusy = isSubmitting || isResetting;
   const supabase = getSupabaseBrowserClient();
 
   async function handleSubmit(event: React.FormEvent) {
@@ -40,11 +43,14 @@ export function LoginForm() {
         email,
         password,
       });
-      setIsSubmitting(false);
       if (signInError) {
+        setIsSubmitting(false);
         setError(signInError.message);
         return;
       }
+      // Leave isSubmitting on through the navigation so the button stays
+      // in its loading state instead of flashing back to idle while the
+      // redirect is in flight.
       router.push(next);
       router.refresh();
       return;
@@ -71,11 +77,14 @@ export function LoginForm() {
       return;
     }
 
+    setIsResetting(true);
     setError(null);
+    setNotice(null);
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
       { redirectTo: `${window.location.origin}/reset-password` }
     );
+    setIsResetting(false);
 
     if (resetError) {
       setError(resetError.message);
@@ -104,6 +113,7 @@ export function LoginForm() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            disabled={isBusy}
             className={inputClassName}
           />
         </label>
@@ -117,6 +127,7 @@ export function LoginForm() {
             autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            disabled={isBusy}
             className={inputClassName}
           />
         </label>
@@ -125,9 +136,11 @@ export function LoginForm() {
           <button
             type="button"
             onClick={handleForgotPassword}
-            className="self-end text-xs text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
+            disabled={isBusy}
+            className="inline-flex items-center gap-1 self-end text-xs text-muted-foreground underline-offset-2 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Forgot password?
+            {isResetting && <Loader2 className="size-3 animate-spin" />}
+            {isResetting ? "Sending..." : "Forgot password?"}
           </button>
         )}
 
@@ -136,9 +149,10 @@ export function LoginForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="mt-2 w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition disabled:opacity-60"
+          disabled={isBusy}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
         >
+          {isSubmitting && <Loader2 className="size-4 animate-spin" />}
           {isSubmitting
             ? "Please wait..."
             : mode === "sign-in"
@@ -154,7 +168,8 @@ export function LoginForm() {
           setError(null);
           setNotice(null);
         }}
-        className="mt-4 w-full text-center text-sm text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
+        disabled={isBusy}
+        className="mt-4 w-full text-center text-sm text-muted-foreground underline-offset-2 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
       >
         {mode === "sign-in"
           ? "Need an account? Create one"
