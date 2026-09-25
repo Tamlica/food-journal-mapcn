@@ -102,14 +102,16 @@ function MapClickCapture({
 
     const handleClick = (event: MapLibreGL.MapMouseEvent) => {
       const features = map.queryRenderedFeatures(event.point);
-      const clickedDataPoint = features.some(
+      const clickedExistingFeature = features.some(
         (feature) =>
           feature.layer.id.includes("clusters-") ||
           feature.layer.id.includes("unclustered-point-") ||
-          feature.layer.id.includes("unclustered-icon-")
+          feature.layer.id.includes("unclustered-icon-") ||
+          // Route lines handle their own clicks (switching the selected route).
+          feature.layer.id.startsWith("route-layer-")
       );
 
-      if (clickedDataPoint) return;
+      if (clickedExistingFeature) return;
 
       onMapPick({
         longitude: event.lngLat.lng,
