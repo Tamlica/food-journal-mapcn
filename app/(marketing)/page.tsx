@@ -235,6 +235,15 @@ export default function MarketingHome() {
               Open the map →
             </Link>
           </p>
+          <p className="foot-letter__ps">
+            <Link href="/privacy" className="cta-link">
+              Privacy
+            </Link>{" "}
+            ·{" "}
+            <Link href="/terms" className="cta-link">
+              Terms
+            </Link>
+          </p>
         </div>
       </footer>
     </MotionConfig>

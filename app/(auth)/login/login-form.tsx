@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -24,11 +25,39 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(() => {
+    const param = searchParams.get("error");
+    return param === "confirmation_failed"
+      ? "That confirmation link is invalid or has expired."
+      : param;
+  });
   const [notice, setNotice] = useState<string | null>(null);
 
-  const isBusy = isSubmitting || isResetting;
+  const isBusy = isSubmitting || isResetting || isGoogleLoading;
   const supabase = getSupabaseBrowserClient();
+
+  async function handleGoogleSignIn() {
+    if (!supabase) {
+      setError("Supabase env is missing. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+      return;
+    }
+
+    setIsGoogleLoading(true);
+    setError(null);
+    setNotice(null);
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      },
+    });
+    // On success the browser navigates to Google, so keep the loading state.
+    if (oauthError) {
+      setIsGoogleLoading(false);
+      setError(oauthError.message);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -204,6 +233,22 @@ export function LoginForm() {
         </button>
       </form>
 
+      <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+        <hr className="flex-1 border-border" />
+        or
+        <hr className="flex-1 border-border" />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={isBusy}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isGoogleLoading && <Loader2 className="size-4 animate-spin" />}
+        {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
+      </button>
+
       <button
         type="button"
         onClick={() => {
@@ -218,6 +263,18 @@ export function LoginForm() {
           ? "Need an account? Create one"
           : "Already have an account? Sign in"}
       </button>
+
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        By continuing you agree to our{" "}
+        <Link href="/terms" className="underline underline-offset-2">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline underline-offset-2">
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </div>
   );
 }

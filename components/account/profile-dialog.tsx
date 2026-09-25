@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { UserIdentity } from "@supabase/supabase-js";
 import { Check, Copy, Loader2 } from "lucide-react";
 
 import {
@@ -61,6 +62,35 @@ export function ProfileDialog({
   profile,
   onProfileChange,
 }: ProfileDialogProps) {
+  const [identities, setIdentities] = useState<UserIdentity[] | null>(null);
+
+  const reloadIdentities = useCallback(async () => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    const { data } = await supabase.auth.getUserIdentities();
+    setIdentities(data?.identities ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+
+    let cancelled = false;
+    void supabase.auth.getUserIdentities().then(({ data }) => {
+      if (!cancelled) setIdentities(data?.identities ?? []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  // null while loading so the password section doesn't flash the wrong form.
+  const hasPassword =
+    identities === null
+      ? null
+      : identities.some((identity) => identity.provider === "email");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -83,7 +113,17 @@ export function ProfileDialog({
         <hr className="border-border" />
         <EmailSection currentEmail={email} />
         <hr className="border-border" />
-        <PasswordSection email={email} />
+        <SignInMethodsSection
+          identities={identities}
+          hasPassword={hasPassword}
+          onChange={reloadIdentities}
+        />
+        <hr className="border-border" />
+        <PasswordSection
+          email={email}
+          hasPassword={hasPassword}
+          onPasswordSet={reloadIdentities}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -398,12 +438,129 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
   );
 }
 
-function PasswordSection({ email }: { email: string }) {
+function SignInMethodsSection({
+  identities,
+  hasPassword,
+  onChange,
+}: {
+  identities: UserIdentity[] | null;
+  hasPassword: boolean | null;
+  onChange: () => Promise<void>;
+}) {
+  const [isBusy, setIsBusy] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+
+  const googleIdentity = identities?.find(
+    (identity) => identity.provider === "google"
+  );
+  const googleEmail =
+    typeof googleIdentity?.identity_data?.email === "string"
+      ? googleIdentity.identity_data.email
+      : null;
+
+  async function handleLink() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+
+    setIsBusy(true);
+    setFeedback(null);
+    const { error } = await supabase.auth.linkIdentity({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/app` },
+    });
+    // On success the browser navigates to Google, so keep the busy state.
+    if (error) {
+      setIsBusy(false);
+      setFeedback({ type: "error", message: error.message });
+    }
+  }
+
+  async function handleUnlink() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase || !googleIdentity) return;
+
+    setIsBusy(true);
+    setFeedback(null);
+    const { error } = await supabase.auth.unlinkIdentity(googleIdentity);
+    if (error) {
+      setIsBusy(false);
+      setFeedback({ type: "error", message: error.message });
+      return;
+    }
+    await onChange();
+    setIsBusy(false);
+    setFeedback({ type: "success", message: "Google account unlinked." });
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-semibold text-foreground">Sign-in methods</h3>
+
+      <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2">
+        <span className="min-w-0 text-sm text-foreground">
+          Google
+          <span className="block truncate text-xs text-muted-foreground">
+            {identities === null
+              ? "Loading..."
+              : googleIdentity
+                ? `Connected${googleEmail ? ` as ${googleEmail}` : ""}`
+                : "Not connected"}
+          </span>
+        </span>
+
+        {identities !== null &&
+          (googleIdentity ? (
+            <button
+              type="button"
+              onClick={handleUnlink}
+              disabled={isBusy || !hasPassword}
+              title={hasPassword ? undefined : "Set a password first"}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground transition hover:bg-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isBusy && <Loader2 className="size-3 animate-spin" />}
+              Unlink
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLink}
+              disabled={isBusy}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground transition hover:bg-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isBusy && <Loader2 className="size-3 animate-spin" />}
+              Link Google account
+            </button>
+          ))}
+      </div>
+
+      {googleIdentity && hasPassword === false && (
+        <p className="text-xs text-muted-foreground">
+          Set a password below before you can unlink Google, so you don&apos;t
+          lose access to your account.
+        </p>
+      )}
+      <FeedbackText feedback={feedback} />
+    </div>
+  );
+}
+
+function PasswordSection({
+  email,
+  hasPassword,
+  onPasswordSet,
+}: {
+  email: string;
+  hasPassword: boolean | null;
+  onPasswordSet: () => Promise<void>;
+}) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+
+  // Google-only accounts have no password yet, so there is nothing to verify.
+  const isSettingFirstPassword = hasPassword === false;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -418,14 +575,16 @@ function PasswordSection({ email }: { email: string }) {
     setIsSaving(true);
     setFeedback(null);
 
-    const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email,
-      password: currentPassword,
-    });
-    if (verifyError) {
-      setIsSaving(false);
-      setFeedback({ type: "error", message: "Current password is incorrect." });
-      return;
+    if (!isSettingFirstPassword) {
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (verifyError) {
+        setIsSaving(false);
+        setFeedback({ type: "error", message: "Current password is incorrect." });
+        return;
+      }
     }
 
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -438,23 +597,41 @@ function PasswordSection({ email }: { email: string }) {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setFeedback({ type: "success", message: "Password updated." });
+    setFeedback({
+      type: "success",
+      message: isSettingFirstPassword
+        ? "Password set. You can now sign in with email and password."
+        : "Password updated.",
+    });
+    await onPasswordSet();
   }
+
+  if (hasPassword === null) return null;
 
   return (
     <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-      <h3 className="text-sm font-semibold text-foreground">Password</h3>
-      <input
-        type="password"
-        required
-        value={currentPassword}
-        onChange={(event) => setCurrentPassword(event.target.value)}
-        disabled={isSaving}
-        autoComplete="current-password"
-        placeholder="Current password"
-        aria-label="Current password"
-        className={inputClassName}
-      />
+      <h3 className="text-sm font-semibold text-foreground">
+        {isSettingFirstPassword ? "Set a password" : "Password"}
+      </h3>
+      {isSettingFirstPassword && (
+        <p className="text-xs text-muted-foreground">
+          You signed up with Google. Add a password to also sign in with{" "}
+          {email || "your email"}.
+        </p>
+      )}
+      {!isSettingFirstPassword && (
+        <input
+          type="password"
+          required
+          value={currentPassword}
+          onChange={(event) => setCurrentPassword(event.target.value)}
+          disabled={isSaving}
+          autoComplete="current-password"
+          placeholder="Current password"
+          aria-label="Current password"
+          className={inputClassName}
+        />
+      )}
       <input
         type="password"
         required
@@ -482,7 +659,11 @@ function PasswordSection({ email }: { email: string }) {
       <FeedbackText feedback={feedback} />
       <button type="submit" disabled={isSaving} className={buttonClassName}>
         {isSaving && <Loader2 className="size-4 animate-spin" />}
-        {isSaving ? "Updating..." : "Update password"}
+        {isSaving
+          ? "Updating..."
+          : isSettingFirstPassword
+            ? "Set password"
+            : "Update password"}
       </button>
     </form>
   );

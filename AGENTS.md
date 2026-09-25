@@ -24,7 +24,9 @@ Single-page client-only Next.js app. All data flows through the browser Supabase
   - `lib/stores/use-food-journal-store.ts` — data layer: places, tags, filters, CRUD with optimistic updates + rollback on error
   - `lib/stores/use-map-ui-store.ts` — UI state: panel open/close, selected place, draft coordinates
 - **`lib/supabase/queries.ts`** — all Supabase queries and image uploads
-- **`lib/supabase/client.ts`** — singleton browser client (`persistSession: false`, `autoRefreshToken: false`)
+- **`lib/supabase/client.ts`** — singleton browser client (`@supabase/ssr`, cookie-based session)
+- **`app/auth/callback/route.ts`** — OAuth (Google) PKCE code exchange; `app/auth/confirm/route.ts` handles email OTP links
+- Google OAuth needs the Google provider **and Manual Linking** enabled in the Supabase dashboard (Profile → "Link Google account" uses `linkIdentity`)
 - **`components/ui/map.tsx`** — MapLibreGL wrapper; ref type is `MapRef`
 - **`lib/data/seed.ts`** — seed data (not auto-run; manually import if needed)
 
