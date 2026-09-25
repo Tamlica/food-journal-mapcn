@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { STATUS_STYLE } from "@/lib/constants/food-journal";
 import { formatIdr } from "@/lib/format";
 import { getTagMap } from "@/lib/food-journal-utils";
@@ -29,6 +30,8 @@ type PlaceDetailPanelProps = {
   /** Omit onEdit/onDelete to render the panel read-only (public page). */
   onEdit?: (place: Place) => void;
   onDelete?: (placeId: string) => void;
+  /** Omit to hide the per-photo delete buttons (public page). */
+  onDeleteImage?: (place: Place, imageUrl: string) => void;
   onClose: () => void;
   onGetDirections: (placeCoords: { longitude: number; latitude: number }) => void;
   isRouteLoading: boolean;
@@ -40,12 +43,14 @@ export function PlaceDetailPanel({
   tags,
   onEdit,
   onDelete,
+  onDeleteImage,
   onClose,
   onGetDirections,
   isRouteLoading,
   routeError,
 }: PlaceDetailPanelProps) {
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState<number | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
 
   if (!place) return null;
 
@@ -105,18 +110,29 @@ export function PlaceDetailPanel({
         {imageUrls.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {imageUrls.map((imageUrl, index) => (
-              <button
-                key={`${imageUrl}-${index}`}
-                type="button"
-                onClick={() => setFullscreenImageIndex(index)}
-                className="overflow-hidden rounded-md border border-border"
-              >
-                <img
-                  src={imageUrl}
-                  alt={`${place.name} ${index + 1}`}
-                  className="h-32 w-full cursor-zoom-in object-cover"
-                />
-              </button>
+              <div key={`${imageUrl}-${index}`} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setFullscreenImageIndex(index)}
+                  className="block w-full overflow-hidden rounded-md border border-border"
+                >
+                  <img
+                    src={imageUrl}
+                    alt={`${place.name} ${index + 1}`}
+                    className="h-32 w-full cursor-zoom-in object-cover"
+                  />
+                </button>
+                {onDeleteImage ? (
+                  <button
+                    type="button"
+                    aria-label={`Delete photo ${index + 1}`}
+                    onClick={() => setImageToDelete(imageUrl)}
+                    className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-1.5 text-white transition hover:bg-destructive"
+                  >
+                    <Trash2 className="size-3" />
+                  </button>
+                ) : null}
+              </div>
             ))}
           </div>
         ) : null}
@@ -215,6 +231,28 @@ export function PlaceDetailPanel({
       </div>
       </div>
     </section>
+
+      <ConfirmDialog
+        open={imageToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setImageToDelete(null);
+        }}
+        title="Delete this photo?"
+        description="It will be removed from this place and can't be recovered."
+        confirmLabel="Delete photo"
+        destructive
+        onConfirm={() => {
+          if (imageToDelete) onDeleteImage?.(place, imageToDelete);
+        }}
+      >
+        {imageToDelete ? (
+          <img
+            src={imageToDelete}
+            alt="Photo to delete"
+            className="h-40 w-full rounded-md border border-border object-cover"
+          />
+        ) : null}
+      </ConfirmDialog>
 
       {fullscreenImageUrl ? (
         <div

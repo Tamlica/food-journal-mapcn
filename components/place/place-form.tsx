@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Star, StarHalf } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Star, StarHalf, X } from "lucide-react";
 
 import {
   MAX_PRICE_IDR,
@@ -12,6 +12,7 @@ import {
   PRICE_STEP_IDR,
   STATUS_STYLE,
 } from "@/lib/constants/food-journal";
+import { Slider } from "@/components/ui/slider";
 import { formatIdr } from "@/lib/format";
 import type {
   CreatePlaceInput,
@@ -106,12 +107,12 @@ export function PlaceForm({
     };
   }, [latitudeText, longitudeText]);
 
-  const existingImageUrls = useMemo(() => {
+  const [keptImageUrls, setKeptImageUrls] = useState<string[]>(() => {
     if (initialPlace?.imageUrls?.length) {
       return initialPlace.imageUrls;
     }
     return initialPlace?.imageUrl ? [initialPlace.imageUrl] : [];
-  }, [initialPlace]);
+  });
 
   const imagePreviewUrls = useMemo(
     () => imageFiles.map((file) => URL.createObjectURL(file)),
@@ -123,8 +124,6 @@ export function PlaceForm({
       imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [imagePreviewUrls]);
-
-  const displayImageUrls = imagePreviewUrls.length > 0 ? imagePreviewUrls : existingImageUrls;
 
   const toggleTag = (tagId: string) => {
     setTagIds((prev) =>
@@ -165,17 +164,16 @@ export function PlaceForm({
       tagIds,
       isPublic,
       imageFiles: imageFiles.length > 0 ? imageFiles : undefined,
+      keepImageUrls: initialPlace ? keptImageUrls : undefined,
     });
     setIsSubmitting(false);
   };
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextFiles = Array.from(event.target.files ?? []);
-    if (nextFiles.length === 0) {
-      setImageFiles([]);
-      setImageError(null);
-      return;
-    }
+    // Let the same file be picked again after removing it.
+    event.target.value = "";
+    if (nextFiles.length === 0) return;
 
     const oversizedFiles = nextFiles.filter((file) => file.size > MAX_IMAGE_SIZE_BYTES);
     const validFiles = nextFiles.filter((file) => file.size <= MAX_IMAGE_SIZE_BYTES);
@@ -190,7 +188,7 @@ export function PlaceForm({
       setImageError(null);
     }
 
-    setImageFiles(validFiles);
+    setImageFiles((prev) => [...prev, ...validFiles]);
   };
 
   const submitTag = async () => {
@@ -402,19 +400,25 @@ export function PlaceForm({
         </div>
       )}
 
-      <div className="space-y-1">
-        <label className="text-xs text-muted-foreground">
-          Price (IDR) {formatIdr(priceRange)}
-        </label>
-        <input
-          type="range"
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Price (IDR)</span>
+          <span className="rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium text-foreground">
+            {formatIdr(priceRange)}
+          </span>
+        </div>
+        <Slider
           min={MIN_PRICE_IDR}
           max={MAX_PRICE_IDR}
           step={PRICE_STEP_IDR}
-          value={priceRange}
-          onChange={(event) => setPriceRange(Number(event.target.value))}
-          className="w-full"
+          value={[priceRange]}
+          onValueChange={([next]) => setPriceRange(next)}
+          thumbLabels={["Price"]}
         />
+        <div className="flex justify-between text-[11px] text-muted-foreground">
+          <span>{formatIdr(MIN_PRICE_IDR)}</span>
+          <span>{formatIdr(MAX_PRICE_IDR)}</span>
+        </div>
       </div>
 
       {status === "visited" && (
@@ -550,15 +554,45 @@ export function PlaceForm({
         {imageError ? (
           <p className="text-[11px] text-destructive">{imageError}</p>
         ) : null}
-        {displayImageUrls.length > 0 ? (
+        {keptImageUrls.length + imagePreviewUrls.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
-            {displayImageUrls.map((imageUrl, index) => (
-              <img
-                key={`${imageUrl}-${index}`}
-                src={imageUrl}
-                alt={`Place preview ${index + 1}`}
-                className="h-28 w-full rounded-md border border-border object-cover"
-              />
+            {keptImageUrls.map((imageUrl, index) => (
+              <div key={`kept-${imageUrl}`} className="relative">
+                <img
+                  src={imageUrl}
+                  alt={`Place image ${index + 1}`}
+                  className="h-28 w-full rounded-md border border-border object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove image ${index + 1}`}
+                  onClick={() =>
+                    setKeptImageUrls((prev) => prev.filter((url) => url !== imageUrl))
+                  }
+                  className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-1 text-white transition hover:bg-black/80"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+            {imagePreviewUrls.map((previewUrl, index) => (
+              <div key={`new-${previewUrl}`} className="relative">
+                <img
+                  src={previewUrl}
+                  alt={`New image ${index + 1}`}
+                  className="h-28 w-full rounded-md border border-dashed border-primary/60 object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove new image ${index + 1}`}
+                  onClick={() =>
+                    setImageFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))
+                  }
+                  className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-1 text-white transition hover:bg-black/80"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
             ))}
           </div>
         ) : null}

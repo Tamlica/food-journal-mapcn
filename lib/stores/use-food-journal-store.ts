@@ -163,6 +163,9 @@ export const useFoodJournalStore = create<FoodJournalState>((set, get) => ({
         ...("longitude" in input ? { longitude: input.longitude ?? place.longitude } : {}),
         ...("tagIds" in input ? { tagIds: input.tagIds ?? [] } : {}),
         ...("isPublic" in input ? { isPublic: input.isPublic ?? false } : {}),
+        ...(input.keepImageUrls
+          ? { imageUrls: input.keepImageUrls, imageUrl: input.keepImageUrls[0] ?? null }
+          : {}),
         updatedAt: new Date().toISOString(),
       };
     });

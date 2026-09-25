@@ -259,6 +259,12 @@ export default function Home() {
     openAdd(null);
   };
 
+  const handleDeleteImage = (place: Place, imageUrl: string) => {
+    void editPlace(place.id, {
+      keepImageUrls: place.imageUrls.filter((url) => url !== imageUrl),
+    });
+  };
+
   const handleSubmitPlace = async (payload: {
     name: string;
     notes?: string;
@@ -270,6 +276,7 @@ export default function Home() {
     longitude: number;
     tagIds?: string[];
     imageFiles?: File[];
+    keepImageUrls?: string[];
   }) => {
     const typedPayload = {
       ...payload,
@@ -437,6 +444,7 @@ export default function Home() {
               place={selectedPlace}
               tags={tags}
               onClose={closeDetail}
+              onDeleteImage={handleDeleteImage}
               onDelete={(placeId) => {
                 void removePlace(placeId);
                 closeDetail();
@@ -524,6 +532,7 @@ export default function Home() {
               place={selectedPlace}
               tags={tags}
               onClose={closeDetail}
+              onDeleteImage={handleDeleteImage}
               onDelete={(placeId) => {
                 void removePlace(placeId);
                 closeDetail();

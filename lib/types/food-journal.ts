@@ -48,6 +48,8 @@ export type CreatePlaceInput = {
   tagIds?: string[];
   isPublic?: boolean;
   imageFiles?: File[];
+  /** Edit only: existing image URLs to keep. Omit to leave the current images untouched. */
+  keepImageUrls?: string[];
 };
 
 export type UpdatePlaceInput = Partial<CreatePlaceInput>;

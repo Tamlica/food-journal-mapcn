@@ -94,6 +94,32 @@ async function uploadPlaceImages(placeId: string, files: File[]) {
   return urls.filter((url): url is string => Boolean(url));
 }
 
+function storagePathFromUrl(url: string) {
+  const path = url.split(`/${PLACE_IMAGE_BUCKET}/`)[1]?.split("?")[0];
+  return path?.startsWith("places/") ? decodeURIComponent(path) : null;
+}
+
+// Best-effort: the DB row is already updated, so a failed cleanup only leaves
+// an orphaned file behind. Storage RLS limits deletes to the caller's own folder.
+async function removePlaceImageFiles(urls: string[]) {
+  const supabase = getSupabaseBrowserClient();
+  const paths = urls
+    .map(storagePathFromUrl)
+    .filter((path): path is string => Boolean(path));
+  if (!supabase || paths.length === 0) return;
+
+  const { error } = await supabase.storage.from(PLACE_IMAGE_BUCKET).remove(paths);
+  if (error) console.error("Error removing place images:", error);
+}
+
+async function getPlaceImageUrls(placeId: string) {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase.from("places").select("*").eq("id", placeId).single();
+  return data ? mapPlaceRow(data as PlaceRow).imageUrls : [];
+}
+
 async function updatePlaceImageColumns(
   placeId: string,
   imageUrls: string[]
@@ -263,11 +289,18 @@ export async function updatePlace(
     if (error) throw error;
   }
 
-  if (input.imageFiles !== undefined) {
-    const imageUrls = input.imageFiles.length
+  if (input.imageFiles?.length || input.keepImageUrls !== undefined) {
+    const existing = await getPlaceImageUrls(placeId);
+    // Only ever keep URLs the place already has; everything else is removed.
+    const kept = input.keepImageUrls
+      ? existing.filter((url) => input.keepImageUrls?.includes(url))
+      : existing;
+    const added = input.imageFiles?.length
       ? await uploadPlaceImages(placeId, input.imageFiles)
       : [];
-    await updatePlaceImageColumns(placeId, imageUrls);
+
+    await updatePlaceImageColumns(placeId, [...kept, ...added]);
+    await removePlaceImageFiles(existing.filter((url) => !kept.includes(url)));
   }
 
   if (input.tagIds) {
@@ -306,8 +339,12 @@ export async function deletePlace(placeId: string): Promise<void> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
+  const imageUrls = await getPlaceImageUrls(placeId);
+
   const { error } = await supabase.from("places").delete().eq("id", placeId);
   if (error) throw error;
+
+  await removePlaceImageFiles(imageUrls);
 }
 
 export async function setPlacesPublicByStatus(
