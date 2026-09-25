@@ -35,6 +35,9 @@
 }
 
 .marketing .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
   font-family: var(--font-display);
   font-weight: 600;
   font-size: var(--text-md);
@@ -42,6 +45,12 @@
   color: var(--color-ink);
   text-decoration: none;
   white-space: nowrap;
+}
+
+.marketing .wordmark__logo {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.625rem;
 }
 
 .marketing .cta-link {

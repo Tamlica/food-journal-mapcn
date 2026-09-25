@@ -58,6 +58,14 @@ export default function MarketingHome() {
     <MotionConfig reducedMotion="user">
       <header className="page nav-edge">
         <Link href="/" className="wordmark">
+          <Image
+            src="/makanmap-logo-trans.png"
+            alt=""
+            width={36}
+            height={36}
+            priority
+            className="wordmark__logo"
+          />
           MakanMap
         </Link>
         <Link href="/app" className="cta-link">

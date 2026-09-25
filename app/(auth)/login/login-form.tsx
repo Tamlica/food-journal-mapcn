@@ -1,14 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { AtSign, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const inputClassName =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring";
+  "w-full rounded-lg border border-input bg-background py-2.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted-foreground/60 focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-60";
+
+function Field({
+  icon: Icon,
+  children,
+  trailing,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {children}
+      {trailing}
+    </div>
+  );
+}
 
 function GoogleLogo({ className }: { className?: string }) {
   return (
@@ -46,6 +65,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -168,63 +188,97 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <h1 className="text-lg font-semibold text-foreground">
-        {mode === "sign-in" ? "Sign in" : "Create your account"}
+    <div className="flex w-full flex-col rounded-3xl border border-border bg-card p-8 shadow-sm sm:p-10 lg:min-h-[34rem]">
+      <Image
+        src="/makanmap-logo-trans.png"
+        alt="MakanMap"
+        width={56}
+        height={56}
+        priority
+        className="size-20 rounded-xl"
+      />
+
+      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+        {mode === "sign-in" ? "Welcome back!" : "Create your account"}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1.5 text-sm text-muted-foreground">
         {mode === "sign-in"
           ? "Sign in to see your places."
           : "One account, your places only."}
       </p>
 
-      <form className="mt-5 flex flex-col gap-3" onSubmit={handleSubmit}>
-        <label className="flex flex-col gap-1 text-sm text-foreground">
+      <form className="mt-6 flex flex-col gap-3" onSubmit={handleSubmit}>
+        <label className="flex flex-col gap-1.5 text-sm text-foreground">
           Email
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={isBusy}
-            className={inputClassName}
-          />
-        </label>
-
-        {mode === "sign-up" && (
-          <label className="flex flex-col gap-1 text-sm text-foreground">
-            Username
+          <Field icon={AtSign}>
             <input
-              type="text"
+              type="email"
               required
-              minLength={3}
-              maxLength={30}
-              pattern="[A-Za-z0-9_]{3,30}"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               disabled={isBusy}
               className={inputClassName}
             />
+          </Field>
+        </label>
+
+        {mode === "sign-up" && (
+          <label className="flex flex-col gap-1.5 text-sm text-foreground">
+            Username
+            <Field icon={User}>
+              <input
+                type="text"
+                required
+                minLength={3}
+                maxLength={30}
+                pattern="[A-Za-z0-9_]{3,30}"
+                autoComplete="username"
+                placeholder="your_name"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                disabled={isBusy}
+                className={inputClassName}
+              />
+            </Field>
             <span className="text-xs text-muted-foreground">
               Used for your public page. Letters, numbers and underscores.
             </span>
           </label>
         )}
 
-        <label className="flex flex-col gap-1 text-sm text-foreground">
+        <label className="flex flex-col gap-1.5 text-sm text-foreground">
           Password
-          <input
-            type="password"
-            required
-            minLength={6}
-            autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            disabled={isBusy}
-            className={inputClassName}
-          />
+          <Field
+            icon={Lock}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1 text-muted-foreground transition hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
+              </button>
+            }
+          >
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={6}
+              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              disabled={isBusy}
+              className={`${inputClassName} pr-10`}
+            />
+          </Field>
         </label>
 
         {mode === "sign-in" && (
@@ -232,7 +286,7 @@ export function LoginForm() {
             type="button"
             onClick={handleForgotPassword}
             disabled={isBusy}
-            className="inline-flex items-center gap-1 self-end text-xs text-muted-foreground underline-offset-2 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-1 self-end text-xs text-primary underline-offset-2 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isResetting && <Loader2 className="size-3 animate-spin" />}
             {isResetting ? "Sending..." : "Forgot password?"}
@@ -245,7 +299,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isBusy}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-1 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting && <Loader2 className="size-4 animate-spin" />}
           {isSubmitting
@@ -266,7 +320,7 @@ export function LoginForm() {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isBusy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isGoogleLoading ? (
           <Loader2 className="size-4 animate-spin" />
@@ -276,32 +330,33 @@ export function LoginForm() {
         {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
       </button>
 
-      <button
-        type="button"
-        onClick={() => {
-          setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-          setError(null);
-          setNotice(null);
-        }}
-        disabled={isBusy}
-        className="mt-4 w-full text-center text-sm text-muted-foreground underline-offset-2 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {mode === "sign-in"
-          ? "Need an account? Create one"
-          : "Already have an account? Sign in"}
-      </button>
-
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        By continuing you agree to our{" "}
-        <Link href="/terms" className="underline underline-offset-2">
-          Terms
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="underline underline-offset-2">
-          Privacy Policy
-        </Link>
-        .
+      <p className="mt-5 text-center text-sm text-muted-foreground">
+        {mode === "sign-in" ? "Don't have an account? " : "Already have an account? "}
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+            setError(null);
+            setNotice(null);
+          }}
+          disabled={isBusy}
+          className="cursor-pointer font-semibold text-primary underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {mode === "sign-in" ? "Sign up" : "Sign in"}
+        </button>
       </p>
+
+      <div className="mt-auto flex items-center justify-between gap-4 pt-8 text-xs text-muted-foreground">
+        <span>© {new Date().getFullYear()} MakanMap</span>
+        <span className="flex items-center gap-3">
+          <Link href="/terms" className="underline underline-offset-2">
+            Terms
+          </Link>
+          <Link href="/privacy" className="underline underline-offset-2">
+            Privacy Policy
+          </Link>
+        </span>
+      </div>
     </div>
   );
 }
