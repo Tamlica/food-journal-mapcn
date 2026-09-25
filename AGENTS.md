@@ -10,9 +10,9 @@
 
 No test framework is configured. No typecheck script exists; use `npx tsc --noEmit` if needed.
 
-## OpenCode Config
+## Map Component Docs
 
-`opencode.json` loads external MapCN documentation instructions from `https://www.mapcn.dev/docs`. These apply to the map component (`components/ui/map.tsx`, `components/map/place-map.tsx`).
+Before changing the map component (`components/ui/map.tsx`, `components/map/place-map.tsx`), consult the MapCN documentation at https://www.mapcn.dev/docs (fetch it if your tooling allows).
 
 ## Architecture
 
