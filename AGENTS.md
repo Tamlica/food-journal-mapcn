@@ -38,7 +38,7 @@ Single-page client-only Next.js app. All data flows through the browser Supabase
 - Place IDs are **strings** (UUIDs via `crypto.randomUUID()`), not integers
 - Image storage bucket name: `place-images` (hardcoded in `queries.ts`)
 - Geocoding uses OpenStreetMap Nominatim directly (no API key, but rate-limited)
-- Pricing in IDR (Indonesian Rupiah): range 20,000–200,000, step 5,000
+- Pricing in IDR (Indonesian Rupiah): range 10,000–500,000, step 5,000
 
 ## Supabase Setup
 

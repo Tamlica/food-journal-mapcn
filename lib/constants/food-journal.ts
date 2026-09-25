@@ -6,8 +6,8 @@ export const PLACE_STATUS_OPTIONS: Array<{ value: PlaceStatus; label: string }> 
   { value: "avoid", label: "Avoid" },
 ];
 
-export const MIN_PRICE_IDR = 20000;
-export const MAX_PRICE_IDR = 200000;
+export const MIN_PRICE_IDR = 10000;
+export const MAX_PRICE_IDR = 500000;
 export const PRICE_STEP_IDR = 5000;
 
 export const DEFAULT_FILTERS = {

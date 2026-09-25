@@ -9,6 +9,7 @@ import {
   PRICE_STEP_IDR,
   STATUS_STYLE,
 } from "@/lib/constants/food-journal";
+import { Slider } from "@/components/ui/slider";
 import { formatIdr } from "@/lib/format";
 import type { JournalTag, PlaceFilters } from "@/lib/types/food-journal";
 
@@ -130,37 +131,22 @@ export function FilterPanel({
         <div className="space-y-2">
           <p className="text-muted-foreground">Price Range</p>
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{formatIdr(filters.priceMin)}</span>
-              <span>{formatIdr(filters.priceMax)}</span>
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="rounded-full border border-border bg-background px-2.5 py-0.5 font-medium text-foreground">
+                {formatIdr(filters.priceMin)}
+              </span>
+              <span className="h-px flex-1 bg-border" />
+              <span className="rounded-full border border-border bg-background px-2.5 py-0.5 font-medium text-foreground">
+                {formatIdr(filters.priceMax)}
+              </span>
             </div>
-            <input
-              type="range"
+            <Slider
               min={MIN_PRICE_IDR}
               max={MAX_PRICE_IDR}
               step={PRICE_STEP_IDR}
-              value={filters.priceMin}
-              onChange={(event) =>
-                onSetPriceRange({
-                  min: Math.min(Number(event.target.value), filters.priceMax),
-                  max: filters.priceMax,
-                })
-              }
-              className="w-full"
-            />
-            <input
-              type="range"
-              min={MIN_PRICE_IDR}
-              max={MAX_PRICE_IDR}
-              step={PRICE_STEP_IDR}
-              value={filters.priceMax}
-              onChange={(event) =>
-                onSetPriceRange({
-                  min: filters.priceMin,
-                  max: Math.max(Number(event.target.value), filters.priceMin),
-                })
-              }
-              className="w-full"
+              value={[filters.priceMin, filters.priceMax]}
+              onValueChange={([min, max]) => onSetPriceRange({ min, max })}
+              thumbLabels={["Minimum price", "Maximum price"]}
             />
           </div>
         </div>
