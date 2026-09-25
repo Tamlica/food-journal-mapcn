@@ -381,7 +381,7 @@ export default function Home() {
         </div>
 
         <div className="pointer-events-auto absolute right-3 top-18 flex items-center gap-2 md:hidden">
-          <div className="flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
+          {/* <div className="flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
             <span
               className={`inline-block size-2 rounded-full ${
                 connectionStatus === "connected"
@@ -396,7 +396,7 @@ export default function Home() {
               : connectionStatus === "checking"
                 ? "Checking Supabase"
                 : "Supabase disconnected"}
-          </div>
+          </div> */}
           <AccountMenu onSignOut={handleSignOut} isSigningOut={isSigningOut} />
         </div>
 
